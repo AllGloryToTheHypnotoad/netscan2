@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/walchko/netscan2.svg?branch=master)](https://travis-ci.org/walchko/netscan2)
 
+**Note:** Travis is failing because of pcapy not this code ... need to figure out how to fix
+
 Simple python script which uses pcap and [avahi](http://www.avahi.org) to:
 
 1. Find hosts that are on the LAN passively
@@ -74,9 +76,11 @@ digest.
 
 ## To Do
 
-[ ] remove `arp-scan` and code directly in python
-[ ] add ability to feed a earlier json scan into program and wol to bring up sleeping hosts
-
+*[ ] remove `arp-scan` and code directly in python
+*[ ] add ability to feed a earlier json scan into program and wol to bring up sleeping hosts
+*[ ] change this readme to rst 
+*[ ] better documentation
+*[ ] put on pypi
 
 
 ## Web
