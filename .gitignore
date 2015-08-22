@@ -1,0 +1,7 @@
+old
+*.pyc
+other
+*.html
+*.json
+.DS_Store
+*.yaml
