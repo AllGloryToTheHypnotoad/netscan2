@@ -14,13 +14,13 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.3.0',
+    version='2.1.0',
 
     description='A simple Python active and passive network scanner',
     #long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/walchko/netscan',
+    url='https://github.com/walchko/netscan2',
 
     # Author details
     author='Kevin Walchko',
@@ -67,7 +67,7 @@ setup(
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['pprint','awake','PyYAML','requests','pcapy','dpkt','netaddr','argparse','json','commands','binascii'],
+    install_requires=['awake','requests','pcapy','dpkt','netaddr'],
 
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
@@ -96,6 +96,7 @@ setup(
     entry_points={
         'console_scripts': [
             'netscan=netscan.netscan:main',
+            'html5=netscan.html5:main',
         ],
     },
 )

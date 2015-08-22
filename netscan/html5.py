@@ -2,6 +2,8 @@
 
 import datetime # time stamp
 import socket   # sort ip addresses in order
+import sys      # command line args
+import json     # read netscan files
 
 class WebPage:
 	"""
@@ -156,92 +158,19 @@ class WebPage:
 
 
 def main():
+	
+	if len(sys.argv) < 2:
+		print('Error, must give a json file name: html5 network.json\nUse a netscan json file')
+		exit(1)
+		
 	page = WebPage()
 	
 # 	header = ['ipv4','hostname','mac','os','ports','ipv6','status','lastseen']
 	header = ['ipv4','hostname','mac','os','ports','ipv6']
-	network = [{'hostname': 'Dalek.local',
-  'ipv4': '192.168.1.13',
-  'ipv6': 'fe80::ca2a:14ff:fe1f:1869',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': 'c8:2a:14:1f:18:69',
-  'os': u'Apple',
-  'status': 'up',
-  'tcp': [(88, 'kerberos'), (22, 'ssh')],
-  'udp': []},
- {'hostname': 'Kids-iPod-touch.local',
-  'ipv4': '192.168.1.21',
-  'ipv6': 'fe80::105b:fc94:62aa:1da7',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'status': 'up',
-  'tcp': [],
-  'udp': []},
- {'hostname': 'calculon.local',
-  'ipv4': '192.168.1.17',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': 'b8:27:eb:0a:5a:17',
-  'os': u'Raspberry Pi Foundation',
-  'status': 'up',
-  'tcp': [(22, 'ssh')],
-  'udp': []},
- {'hostname': 'bender.local',
-  'ipv4': '192.168.1.18',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': 'b8:27:eb:8f:23:20',
-  'os': u'Raspberry Pi Foundation',
-  'status': 'up',
-  'tcp': [(22, 'ssh')],
-  'udp': []},
- {'hostname': 'AirportExtreme.local',
-  'ipv4': '192.168.1.1',
-  'ipv6': 'fe80::6e70:9fff:fece:da85',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': '6c:70:9f:ce:da:85',
-  'os': u'Apple',
-  'status': 'up',
-  'tcp': [(5009, 'airport'), (5009, 'acp-sync'), (53, 'domain')],
-  'udp': [(59086, 'sleep-proxy')]},
- {'hostname': 'Office-Apple-TV.local',
-  'ipv4': '192.168.1.14',
-  'ipv6': 'fe80::4c3:f29f:823f:4eca',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'status': 'up',
-  'tcp': [(3689, 'appletv-v2'),
-          (7000, 'airplay'),
-          (5000, 'raop'),
-          (3689, 'touch-able')],
-  'udp': []},
-  {'hostname': 'unknown',
-  'ipv4': '192.168.1.23',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': '28:0d:fc:41:24:44',
-  'os': u'Sony Computer Entertainment Inc.',
-  'status': 'up'},
- {'hostname': 'unknown',
-  'ipv4': '192.168.1.20',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': 'a8:e3:ee:bd:20:ae',
-  'os': u'Sony Computer Entertainment Inc.',
-  'status': 'up'},
- {'hostname': 'unknown',
-  'ipv4': '192.168.1.26',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': '68:d9:3c:4b:35:a8',
-  'os': u'Apple',
-  'status': 'up'},
- {'hostname': 'unknown',
-  'ipv4': '192.168.1.90',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': '00:21:5a:fe:bc:4a',
-  'os': u'Hewlett-Packard Company',
-  'status': 'up'},
- {'hostname': 'unknown',
-  'ipv4': '192.168.1.137',
-  'lastseen': '11:17 Sat 04 Jul 2015',
-  'mac': '5c:95:ae:93:2f:a5',
-  'os': u'Apple',
-  'status': 'up'}]
-  
+	network = {}
+	with open(sys.argv[1]) as data_file:    
+		network = json.load(data_file)
+    
 	page.setInfo(header,network)
 	page.create()
 	page.savePage('test.html')

@@ -7,7 +7,6 @@ import time         # sleep on loop
 import dpkt		    # parse packets
 import binascii     # get MAC addr on ARP messages
 import netaddr	    # ipv4/6 addresses, address space: 192.168.5.0/24
-import argparse	    # command line args
 import json		    # store hosts
 import pprint as pp # display info
 import commands     # arp-scan
@@ -239,7 +238,7 @@ def macLookup(mac):
 ####################################################
 
 class ArpScan(object):
-	def scan(self,int='en1'):
+	def scan(self,dev):
 		"""
 		brew install arp-scan
 	
@@ -251,7 +250,7 @@ class ArpScan(object):
 		 
 		 Need to invest the time to do this myself w/o using commandline
 		"""
-		arp = commands.getoutput("arp-scan -l -I %s"%(int))
+		arp = commands.getoutput("arp-scan -l -I %s"%(dev))
 		a = arp.split('\n')
 		ln = len(a)
 	
@@ -619,13 +618,13 @@ class ActiveMapper(object):
 		"""
 		wol.send_magic_packet(mac)
 			
-	def scan(self):
+	def scan(self,dev):
 		"""
 		arpscan - {'type':'arp', 'mac': b[1],'ipv4': b[0]}
 		portscan - [ (svc,port) ]
 		activescan - {'type': 'portscan', 'ipv4': ip, 'ports': [portscan]}
 		"""
-		arp = self.asn.scan()
+		arp = self.asn.scan(dev)
 		
 		ports = []
 		for host in arp:
@@ -641,43 +640,9 @@ class ActiveMapper(object):
 
 ########################################################
 		
-def handleArgs():
-	parser = argparse.ArgumentParser('A simple semi-passive network recon program. It conducts an arp ping to get MAC addresses and IPv4 addresses. The remainder of the information is passively obtained.')
-	parser.add_argument('-p', '--page', help='name of webpage', default='./network.html')
-	parser.add_argument('-p', '--pcap', help='pcap file name', default='')
-	parser.add_argument('-n', '--network', help='network: 10.1.1.0/24 or 10.1.1.1-10', default='192.168.1.0/24')
-	parser.add_argument('-y', '--yaml', help='yaml file to store network in', default='./spns.yaml')
-	parser.add_argument('-i', '--interface', help='network interface to use', default='en1')
-	parser.add_argument('-d', '--display', help='display results', action='store_true')
-	parser.add_argument('-s', '--scan', help='number of packets to get before reporting, only applicable to live scan not off-line pcap', default=1000)
-
-	args = vars(parser.parse_args())
-
-	return args
-
-
 def main():
 	
-	# handle inputs
-	args = handleArgs()
-	network = args['network']
-	dev = args['interface']
-	pcapFile = args['pcap']
-	loop = int(args['scan'])
-	prnt = args['display']
-	
-	map = {}
-	
-	pm = PassiveMapper()
-	
-	if pcapFile: 
-		print 'Reading pcap file:', pcapFile
-		map = pm.pcap(pcapFile)
-	else:
-		print 'Sniffing device', dev
-		map = pm.live(dev,loop)
-	
-	if prnt: pp.pprint( map )
+	print('Hello and goodbye!')
 		
  
 if __name__ == "__main__":

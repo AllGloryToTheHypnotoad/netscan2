@@ -5,3 +5,4 @@ other
 *.json
 .DS_Store
 *.yaml
+netscan.egg-info
