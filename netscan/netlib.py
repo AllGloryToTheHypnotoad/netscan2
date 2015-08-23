@@ -459,7 +459,9 @@ class PassiveMapper(object):
 
 
 class IP:
-	"""Gets the IP and MAC addresses for the localhost"""
+	"""
+	Gets the IP and MAC addresses for the localhost
+	"""
 	ip = 'x'
 	mac = 'x'
 
@@ -569,6 +571,9 @@ class Pinger(object):
 
 
 class PortScanner(object):
+	"""
+	Scans a single host and finds all open ports with in its range (1 ... n).
+	"""
  	def __init__(self,ports=range(1,1024)):
  		self.ports = ports
  		
@@ -604,7 +609,7 @@ class PortScanner(object):
 
 class ActiveMapper(object):
 	"""
-	
+	Actively scans a network (arp-scan) and then pings each host for open ports.
 	"""
 	def __init__(self,ports=range(1,1024)):
 		self.ps = PortScanner(ports)
