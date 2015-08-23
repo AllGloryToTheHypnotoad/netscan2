@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages  # Always prefer setuptools over distutils
 from codecs import open  # To use a consistent encoding
-from os import path
+import os
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()

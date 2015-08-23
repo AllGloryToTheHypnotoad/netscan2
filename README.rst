@@ -4,7 +4,7 @@ Network Scanner
 .. image:: https://travis-ci.org/walchko/netscan2.svg?branch=master
     :target: https://travis-ci.org/walchko/netscan2
 
-Simple python script which uses pcap, arp-scan, and `avahi<http://www.avahi.org>`__ to:
+Simple python script which uses pcap, arp-scan, and `avahi <http://www.avahi.org>`__ to:
 
 1. Find hosts that are on the LAN passively
 2. Uses an arp-ping to actively identify hosts
@@ -48,8 +48,9 @@ Basic, to search for addresses on your network, use::
 
 	sudo netscan -a -r 5000 -i en1
 
--i, --interface  interface to listen to, ex. en0, en1
--r, --range      what ports to scan (1 ... n), where n in this case is 5000 (upper limit)
+
+-i, --interface   interface to listen to, ex. en0, en1
+-r, --range       what ports to scan (1 ... n), where n in this case is 5000 (upper limit)
 
 The default is to display results to the screen.
 
@@ -70,6 +71,7 @@ Run Active/Passive
 --------------------
 
 ::
+
 	sudo netscan -a -p 1000 -w network.html -i en1
 
 -w, --webpage  output to webpage name network.html
