@@ -18,10 +18,11 @@ Simple python script which uses pcap, arp-scan, and `avahi <http://www.avahi.org
 1. Find hosts that are on the LAN passively
 2. Uses an arp-ping to actively identify hosts
 3. Scan each host to determine open ports and services
-4. Store record of hosts in YAML file
-5. Creates a webpage for the server to display
+4. Store record of hosts in JSON file, html webpage, or prints to screen
 
 **Note:** Since IP addresses change, the hosts are finger printed via their MAC address. 
+
+**Note:** On linux it uses avahi to get hostnames, but doesn't work on OSX
 
 Alternatives
 --------------
@@ -108,6 +109,8 @@ To Do
 - remove ``arp-scan`` and code directly in python
 - add ability to feed a earlier json scan into program and wol to bring up sleeping hosts
 - better documentation
+- add a verbose argument, sometimes it seems like nothing is happening
+- currently not using awake, netaddr, or commands ... need to fix 
 
 
 Web Server

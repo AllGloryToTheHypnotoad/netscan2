@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name='netscan',
-    version='2.1.1',
+    version='2.1.2',
 
     description='A simple Python active and passive network scanner for linux and OSX',
     long_description=read("README.rst"),
