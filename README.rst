@@ -99,5 +99,5 @@ To Do
 Web Server
 -----------
 
-This is designed to work with Node.js `netscan <http://github.com/walchko/netscan2>`__
+This is designed to work with Node.js `netscan <http://github.com/walchko/node-netscan>`__
 
