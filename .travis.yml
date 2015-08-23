@@ -1,14 +1,18 @@
 language: python
-#sudo: required
+
+# to run travis'es containerized system, can't use sude
 sudo: false
 python:
   - "2.7"
+
 # command to install dependencies
 install: python setup.py install
+
 # command to run tests
 script: nosetests 
-#before_install:
-#    - sudo apt-get install libpcap-dev
+
+# http://docs.travis-ci.com/user/migrating-from-legacy/?utm_source=legacy-notice&utm_medium=banner&utm_campaign=legacy-upgrade
+# install dependencies before build using apt-get
 addons:
   apt:
     packages:
