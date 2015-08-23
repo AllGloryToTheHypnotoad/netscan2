@@ -1,10 +1,15 @@
 language: python
-sudo: required
+#sudo: required
+sudo: false
 python:
   - "2.7"
 # command to install dependencies
 install: python setup.py install
 # command to run tests
 script: nosetests 
-before_install:
-    - sudo apt-get install libpcap-dev
+#before_install:
+#    - sudo apt-get install libpcap-dev
+addons:
+  apt:
+    packages:
+    - libpcap-dev
