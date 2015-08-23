@@ -6,3 +6,4 @@ other
 .DS_Store
 *.yaml
 netscan.egg-info
+dist

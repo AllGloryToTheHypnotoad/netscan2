@@ -3,7 +3,16 @@ Network Scanner
 
 .. image:: https://travis-ci.org/walchko/netscan2.svg?branch=master
     :target: https://travis-ci.org/walchko/netscan2
-
+.. image:: https://img.shields.io/pypi/v/netscan.svg
+    :target: https://pypi.python.org/pypi/netscan/
+    :alt: Latest Version
+.. image:: https://img.shields.io/pypi/dm/netscan.svg
+    :target: https://pypi.python.org/pypi/netscan/
+    :alt: Downloads
+.. image:: https://img.shields.io/pypi/l/netscan.svg
+    :target: https://pypi.python.org/pypi/netscan/
+    :alt: License
+    
 Simple python script which uses pcap, arp-scan, and `avahi <http://www.avahi.org>`__ to:
 
 1. Find hosts that are on the LAN passively
@@ -93,11 +102,10 @@ To Do
 - remove ``arp-scan`` and code directly in python
 - add ability to feed a earlier json scan into program and wol to bring up sleeping hosts
 - better documentation
-- put on pypi
 
 
 Web Server
 -----------
 
-This is designed to work with Node.js `netscan <http://github.com/walchko/node-netscan>`__
+This is designed to work with Node.js `netscan <http://github.com/walchko/node-netscan>`__ but that is still work in progress.
 
