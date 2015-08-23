@@ -53,7 +53,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='network scanner',
+    keywords='network scanner active passive dpkt html',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
