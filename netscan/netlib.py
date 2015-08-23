@@ -14,6 +14,7 @@ import requests     # mac api
 import argparse     # command line arguments
 import socket       # ordering
 import sys          # get platform (linux or linux2)
+import subprocess   # use commandline
 from awake import wol # wake on lan
 
 """

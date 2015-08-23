@@ -7,3 +7,5 @@ other
 *.yaml
 netscan.egg-info
 dist
+.AppleDouble
+
