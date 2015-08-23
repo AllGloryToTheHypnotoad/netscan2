@@ -38,6 +38,12 @@ Pre-requisites::
 
 	brew install pcap arp-scan
 
+or
+
+::
+
+	sudo apt-get install libpcap-dev arp-scan
+
 Download and unzip, then from inside the package::
 
 	sudo python setup.py install

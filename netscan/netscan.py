@@ -5,6 +5,7 @@ import pprint as pp # debug
 import html5        # make webpage
 import argparse     # handle command line
 import json         # save data
+import os           # determine sudo
 
 
 def handleArgs():
@@ -12,6 +13,12 @@ def handleArgs():
 	ping to get MAC addresses and IPv4 addresses. An active part then uses the ip addresses
 	to scan for open ports. The remainder of the information is passively obtained using 
 	the pcap library.
+	
+	examples:
+	
+		sudo netscan -a -i en1 -r 5000
+		sudo netscan -p 1000 -i en1 
+		sudo netscan -a -p 500 -i en1 -j network.json
 	"""
 	parser = argparse.ArgumentParser(description)
 	parser.add_argument('-j', '--json', help='name of json file', default='')
@@ -34,9 +41,11 @@ def main():
 	args = handleArgs()
 # 	network = args['network']
 	dev = args['interface']
-	if not dev:
-		print('Error: you MUST give an interface to scan or list on, ex. -i en1')
-		exit(1)
+	if not dev: 
+		exit('Error: you MUST give an interface to scan or list on, ex. -i en1')
+		
+	if os.geteuid() != 0:
+		exit('You need to be root/sudo for this ... exiting')
 	
 # 	pcapFile = args['pcap']
 	pkts = int(args['passive'])

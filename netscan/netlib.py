@@ -599,7 +599,11 @@ class PortScanner(object):
 		for port in self.ports:	
 			good = self.openPort(ip,port)
 			if good:
-				svc = socket.getservbyport(port).strip()
+				svc = ''
+				try:
+					svc = socket.getservbyport(port).strip()
+				except:
+					svc = 'unknown'
 				tcp.append( (port,svc) )
 # 			if banner and good:
 # 				ports[str(port)+'_banner'] = self.getBanner(ip,port)
