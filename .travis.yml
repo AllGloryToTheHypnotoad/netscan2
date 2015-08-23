@@ -7,4 +7,4 @@ install: python setup.py install
 # command to run tests
 script: nosetests 
 before_install:
-    - sudo apt-get install libpcap-dev -qq
+    - sudo apt-get install libpcap-dev
