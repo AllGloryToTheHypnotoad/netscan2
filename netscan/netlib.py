@@ -1,76 +1,22 @@
 #!/usr/bin/env python
 
-import datetime     # time stamp
-import pcapy	    # passive mapping
-import os		    # check sudo
-import time         # sleep on loop
-import dpkt		    # parse packets
-import binascii     # get MAC addr on ARP messages
-import netaddr	    # ipv4/6 addresses, address space: 192.168.5.0/24
-import json		    # store hosts
-import pprint as pp # display info
-import commands     # arp-scan
-import requests     # mac api
-import argparse     # command line arguments
-import socket       # ordering
-import sys          # get platform (linux or linux2)
-import subprocess   # use commandline
+import datetime		# time stamp
+import pcapy		# passive mapping
+import os			# check sudo
+import dpkt			# parse packets
+import binascii		# get MAC addr on ARP messages
+import netaddr		# ipv4/6 addresses, address space: 192.168.5.0/24
+# import pprint as pp # display info
+import commands		# arp-scan
+import requests		# mac api
+import socket		# ordering
+import sys			# get platform (linux or linux2)
+import subprocess	# use commandline
+import random		# Pinger uses it when creating ICMP packets
 from awake import wol # wake on lan
 
 """
 [kevin@Tardis test]$ ./pmap5.py -p test2.pcap -d
-Reading pcap file: test2.pcap
-[{'hostname': 'Dalek.local',
-  'ipv4': '192.168.1.13',
-  'ipv6': 'fe80::ca2a:14ff:fe1f:1869',
-  'mac': 'c8:2a:14:1f:18:69',
-  'os': '',
-  'tcp': [],
-  'udp': []},
- {'hostname': 'Kids-iPod-touch.local',
-  'ipv4': '192.168.1.21',
-  'ipv6': 'fe80::105b:fc94:62aa:1da7',
-  'tcp': [],
-  'udp': []},
- {'hostname': 'calculon.local',
-  'ipv4': '192.168.1.17',
-  'mac': 'b8:27:eb:0a:5a:17',
-  'os': '',
-  'tcp': [],
-  'udp': []},
- {'hostname': 'bender.local',
-  'ipv4': '192.168.1.18',
-  'mac': 'b8:27:eb:8f:23:20',
-  'os': '',
-  'tcp': [],
-  'udp': []},
- {'hostname': 'AirportExtreme.local',
-  'ipv4': '192.168.1.1',
-  'ipv6': 'fe80::6e70:9fff:fece:da85',
-  'mac': '6c:70:9f:ce:da:85',
-  'os': '',
-  'tcp': [{5009: 'acp-sync'}, {5009: 'airport'}],
-  'udp': [{59086: 'sleep-proxy'}]},
- {'hostname': 'Office-Apple-TV.local',
-  'ipv4': '192.168.1.14',
-  'ipv6': 'fe80::4c3:f29f:823f:4eca',
-  'tcp': [{7000: 'airplay'},
-          {5000: 'raop'},
-          {3689: 'touch-able'},
-          {3689: 'appletv-v2'}],
-  'udp': []},
- {'hostname': 'Apple-TV.local',
-  'ipv4': '192.168.1.15',
-  'ipv6': 'fe80::18b5:5727:6dbe:d109',
-  'tcp': [],
-  'udp': []},
- {'hostname': 'unknown',
-  'ipv4': '192.168.1.4',
-  'mac': 'f8:1e:df:ea:68:20',
-  'os': u'Apple'}]
-  
-
-
 
 sudo tcpdump -s 0 -i en1 -w test.pcap
 -s 0 will set the capture byte to its maximum i.e. 65535 and will not truncate
@@ -120,7 +66,7 @@ class PacketDecoder(object):
 		s = list()
 		for i in range(12/2) :	# mac_addr should always be 12 chars, we work in groups of 2 chars
 			s.append( mac_addr[i*2:i*2+2] )
-		r = ":".join(s)		# I know this looks strange, refer to http://docs.python.org/library/stdtypes.html#sequence-types-str-unicode-list-tuple-bytearray-buffer-xrange
+		r = ":".join(s)		
 		return r
 		
 	def decode(self,eth):
@@ -143,11 +89,11 @@ class PacketDecoder(object):
 			if ip.p == dpkt.ip.IP_PROTO_UDP:
 				udp = ip.data
 
-# 				if udp.dport == 53: #DNS
-# 					dns = dpkt.dns.DNS(udp.data)
-# 					for rr in dns.an:
-# 						h = self.getRecord(rr)
-# 						print h
+#				if udp.dport == 53: #DNS
+#					dns = dpkt.dns.DNS(udp.data)
+#					for rr in dns.an:
+#						h = self.getRecord(rr)
+#						print h
 						
 				if udp.dport == 5353: # mDNS
 					msg = {}					
@@ -183,13 +129,13 @@ class PacketDecoder(object):
 		"""
 		The response records (rr) in a dns packet all refer to the same host
 		"""
-		if   rr.type == 1:  return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata),'hostname': rr.name}
+		if	 rr.type == 1:	return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata),'hostname': rr.name}
 		elif rr.type == 28: return {'type': 'aaaa', 'ipv6': socket.inet_ntop(socket.AF_INET6, rr.rdata), 'hostname': rr.name}
-		elif rr.type == 5:  return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
+		elif rr.type == 5:	return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
 		elif rr.type == 13: return {'type': 'hostinfo', 'hostname': rr.name, 'info': rr.rdata}
 		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]} 
 		elif rr.type == 12: return {'type': 'ptr'} 
-		elif rr.type == 16: return {'type': 'txt'}  
+		elif rr.type == 16: return {'type': 'txt'}	
 		elif rr.type == 10: return {'type': 'wtf'}	
 
 #########################
@@ -285,11 +231,11 @@ class Analyzer(object):
 		finds a recored in a list
 		"""
 		return next(x for x in net if x['ipv4'] == ip)
-# 		
-# 		print 'find:',ip
-# 		for r in net:
-# 			print r['ipv4'] 
-# 			if r['ipv4'] == ip: return r
+#		
+#		print 'find:',ip
+#		for r in net:
+#			print r['ipv4'] 
+#			if r['ipv4'] == ip: return r
 				
 	def check(self,net,rec):
 		"""
@@ -299,15 +245,15 @@ class Analyzer(object):
 			if r['ipv4'] == rec['ipv4']: return True
 		return False
 	
-# 	def checkSrv(self,ar,svc):
-# 		"""
-# 		check if a service record already exists
-# 		"""
-# 		for s in ar:
-# 			if s == svc: return True
-# 		return False	
+#	def checkSrv(self,ar,svc):
+#		"""
+#		check if a service record already exists
+#		"""
+#		for s in ar:
+#			if s == svc: return True
+#		return False	
 		
-	def merge(self,map,active):
+	def merge(self,nmap,active):
 		"""
 		Merges the active and passive scans
 		
@@ -326,12 +272,12 @@ class Analyzer(object):
 		"""
 		
 		for i in active:
-			map.append(i)
+			nmap.append(i)
 		
 		net = []
 		
 		# go thru everything passively collected and build a network map
-		for i in map:
+		for i in nmap:
 			# mdns are the primary good ones
 			if i['type'] == 'mdns':
 				rec={'tcp':[],'udp':[]}
@@ -358,7 +304,7 @@ class Analyzer(object):
 		# not found in the passive mapping or update hosts with other info (mac, ports, etc)
 		
 		# start with arp to get all hosts found
-		for i in map:	
+		for i in nmap:	
 			if i['type'] == 'arp':
 				found = False
 				# see if the ip has been found, if so, add the mac addr
@@ -372,9 +318,9 @@ class Analyzer(object):
 					net.append({'ipv4': i['ipv4'], 'mac': i['mac'], 'os': macLookup(i['mac'])['company']})
 		
 		# now do ports after all hosts found
-		for i in map:	
+		for i in nmap:	
 			if i['type'] == 'portscan':
-# 				print 'portscan',i['ipv4'],i['ports']
+#				print 'portscan',i['ipv4'],i['ports']
 				host = self.find(net,i['ipv4'])
 				if 'tcp' not in host:
 					host['tcp'] = i['ports']
@@ -411,11 +357,11 @@ class PassiveMapper(object):
 		a = self.p.decode(eth)
 		if a: self.map.append(a)
 
-	def pcap(self,file):
+	def pcap(self,fname):
 		"""
 		opens a pcap file and reads the contents
 		"""
-		cap = pcapy.open_offline(file)
+		cap = pcapy.open_offline(fname)
 	
 		self.map = []
 		self.p = PacketDecoder()	
@@ -459,7 +405,7 @@ class PassiveMapper(object):
 		return self.map
 
 
-class IP:
+class IP(object):
 	"""
 	Gets the IP and MAC addresses for the localhost
 	"""
@@ -490,7 +436,7 @@ class IP:
 		out: string of hex for MAC address 'aa:bb:11:22..' or empty string if error
 		"""
 		# this doesn't work, could return any network address (en0, en1, bluetooth, etc)
-		#return	':'.join(re.findall('..', '%012x' % uuid.getnode()))
+		#return ':'.join(re.findall('..', '%012x' % uuid.getnode()))
 		mac = commands.getoutput("ifconfig " + dev + "| grep ether | awk '{ print $2 }'")
 		
 		# double check it is a valid mac address
@@ -504,6 +450,8 @@ class Pinger(object):
 	Determine if host is up. 
 	
 	ArpScan is probably better ... get MAC info from it
+	
+	this uses netaddr and random ... can remove if not using
 	"""
 	def __init__(self):
 		comp = IP()
@@ -549,7 +497,7 @@ class Pinger(object):
 		net = {}
 	
 		# continually read in packets and parse their information
-		for ip in na.IPNetwork(subnet).iter_hosts():
+		for ip in netaddr.IPNetwork(subnet).iter_hosts():
 			raw_buffer = self.ping(str(ip))
 		
 			if not raw_buffer:
@@ -557,7 +505,7 @@ class Pinger(object):
 			
 			ip = dpkt.ip.IP(raw_buffer)
 			src = socket.inet_ntoa(ip.src)
-			dst = socket.inet_ntoa(ip.dst)
+			# dst = socket.inet_ntoa(ip.dst)
 			icmp = ip.data
 		
 			# ICMP_UNREACH = 3
@@ -575,11 +523,11 @@ class PortScanner(object):
 	"""
 	Scans a single host and finds all open ports with in its range (1 ... n).
 	"""
- 	def __init__(self,ports=range(1,1024)):
- 		self.ports = ports
- 		
- 	def getBanner(self,ip,port):
- 		return ''
+	def __init__(self,ports=range(1,1024)):
+		self.ports = ports
+		
+# 	def getBanner(self,ip,port):
+# 		return ''
 		
 	def openPort(self,ip,port):
 		try:			
@@ -594,10 +542,10 @@ class PortScanner(object):
 			self.sock.close()
 			return False
 			
-	def scan(self,ip,banner=False):
- 		tcp = []
- 		
-		for port in self.ports:	
+	def scan(self,ip):
+		tcp = []
+		
+		for port in self.ports: 
 			good = self.openPort(ip,port)
 			if good:
 				svc = ''
@@ -606,8 +554,8 @@ class PortScanner(object):
 				except:
 					svc = 'unknown'
 				tcp.append( (port,svc) )
-# 			if banner and good:
-# 				ports[str(port)+'_banner'] = self.getBanner(ip,port)
+#			if banner and good:
+#				ports[str(port)+'_banner'] = self.getBanner(ip,port)
 		
 		self.sock.close()
 		return tcp
@@ -656,4 +604,4 @@ def main():
 		
  
 if __name__ == "__main__":
-  main()
+	main()

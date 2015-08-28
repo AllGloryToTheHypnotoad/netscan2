@@ -12,6 +12,9 @@ Network Scanner
 .. image:: https://img.shields.io/pypi/l/netscan.svg
     :target: https://pypi.python.org/pypi/netscan/
     :alt: License
+.. image:: https://landscape.io/github/walchko/netscan2/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/walchko/netscan2/master
+   :alt: Code Health
     
 Simple python script which uses pcap, arp-scan, and `avahi <http://www.avahi.org>`__ to:
 

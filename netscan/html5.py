@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import datetime # time stamp
-import socket   # sort ip addresses in order
-import sys      # command line args
-import json     # read netscan files
+import socket	# sort ip addresses in order
+import sys		# command line args
+import json		# read netscan files
 
-class WebPage:
+class WebPage(object):
 	"""
 	Creates a simple webpage from a json/dict
 	"""
@@ -78,12 +78,12 @@ class WebPage:
 		p = ['<td><table  class="pure-table pure-table-horizontal">']
 		
 		if tcp: 
-			p.append('<tr><thead><th> TCP </th><th>  </th></thead></tr>')
+			p.append('<tr><thead><th> TCP </th><th>	 </th></thead></tr>')
 			p.append('<tbody>')
 			for i in tcp: p.append('<tr><td> %d </td><td> %s </td></tr>'%(i[0],i[1]) )
 			p.append('</tbody>')
 		if udp: 
-			p.append('<tr><thead><th> UDP </th><th>  </th></thead></tr>')
+			p.append('<tr><thead><th> UDP </th><th>	 </th></thead></tr>')
 			p.append('<tbody>')
 			for i in udp: p.append('<tr><td> %d </td><td> %s </td></tr>'%(i[0],i[1]) )
 			p.append('</tbody>')
@@ -99,7 +99,7 @@ class WebPage:
 		makes a row
 		
 		in: header - the key for each column
-		    host - json/dict for a single host containing the key/value pair for each column
+			host - json/dict for a single host containing the key/value pair for each column
 		"""
 		row = []
 		row.append('<tr>')
@@ -107,9 +107,9 @@ class WebPage:
 			if head == 'hostname': row.append('<td> %s </td>'%(host[head].rstrip('.local')))
 			elif head == 'ports': 
 				if 'tcp' in host or 'udp' in host: row.append( self.makePorts(host['tcp'],host['udp']) )
-				else: row.append('<td>  </td>')
+				else: row.append('<td>	</td>')
 			elif head in host: row.append('<td> %s </td>'%(host[head]))
-			else: row.append('<td>  </td>')
+			else: row.append('<td>	</td>')
 		row.append('</tr>')
 		
 		return ''.join( row )
@@ -120,7 +120,7 @@ class WebPage:
 		creates the table
 		
 		in: header - list of each key for each column
-		    info - a list of each host's info
+			info - a list of each host's info
 		"""
 		
 		table = []
@@ -148,7 +148,7 @@ class WebPage:
 		table.append('</table>')
 		self.table = ''.join(table)
 		
-	# Expect a list containing lines of html which will create a Google Map	
+	# Expect a list containing lines of html which will create a Google Map 
 	def printPage(self):
 		"""
 		Prints page to screen
@@ -165,12 +165,12 @@ def main():
 		
 	page = WebPage()
 	
-# 	header = ['ipv4','hostname','mac','os','ports','ipv6','status','lastseen']
+#	header = ['ipv4','hostname','mac','os','ports','ipv6','status','lastseen']
 	header = ['ipv4','hostname','mac','os','ports','ipv6']
 	network = {}
-	with open(sys.argv[1]) as data_file:    
+	with open(sys.argv[1]) as data_file:	
 		network = json.load(data_file)
-    
+	
 	page.setInfo(header,network)
 	page.create()
 	page.savePage('test.html')
