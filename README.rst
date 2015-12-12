@@ -1,6 +1,9 @@
 Network Scanner
 =================
 
+.. figure:: https://imgs.xkcd.com/comics/map_of_the_internet.jpg
+	:align: center
+	
 .. image:: https://travis-ci.org/walchko/netscan2.svg?branch=master
     :target: https://travis-ci.org/walchko/netscan2
 .. image:: https://img.shields.io/pypi/v/netscan.svg
