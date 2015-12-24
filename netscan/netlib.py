@@ -36,7 +36,61 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 
 
 #######################
+# class DNS(object):
+# 	def __init(self,udp)__:
+# 		dns = dpkt.dns.DNS(udp.data)
+# 		for rr in dns.an:
+# 			h = self.getRecord(rr)
+# 			print h
 
+class ARP(object):
+	def __init__(self, arp):
+		if arp.op == dpkt.arp.ARP_OP_REPLY:
+			msg={'type':'arp', 'mac': self.add_colons_to_mac( binascii.hexlify(arp.sha) ),'ipv4':socket.inet_ntoa(arp.spa)}
+			return msg
+		else: return {}
+
+class mDNS(object):
+	def __init__(self,udp):
+		msg = {}					
+		try:
+			mdns = dpkt.dns.DNS(udp.data)	 
+		except dpkt.Error:	
+			#print 'dpkt.Error' 
+			return msg
+		except (IndexError, TypeError):
+			# dpkt shouldn't do this, but it does in some cases
+			#print 'other error'
+			return msg
+
+		if mdns.qr != dpkt.dns.DNS_R: return msg
+		if mdns.opcode != dpkt.dns.DNS_QUERY: return msg
+		if mdns.rcode != dpkt.dns.DNS_RCODE_NOERR: return msg
+	
+		msg['type'] = 'mdns'
+		ans = []
+
+		for rr in mdns.an:
+			h = self.getRecord(rr)
+		
+			# check if empty
+			if h: ans.append( h )
+		
+		msg['rr'] = ans
+		return msg
+
+	def getRecord(self,rr):
+		"""
+		The response records (rr) in a dns packet all refer to the same host
+		"""
+		if	 rr.type == 1:	return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata),'hostname': rr.name}
+		elif rr.type == 28: return {'type': 'aaaa', 'ipv6': socket.inet_ntop(socket.AF_INET6, rr.rdata), 'hostname': rr.name}
+		elif rr.type == 5:	return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
+		elif rr.type == 13: return {'type': 'hostinfo', 'hostname': rr.name, 'info': rr.rdata}
+		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]} 
+		elif rr.type == 12: return {'type': 'ptr'} 
+		elif rr.type == 16: return {'type': 'txt'}	
+		elif rr.type == 10: return {'type': 'wtf'}	
 
 class PacketDecoder(object):
 	"""
@@ -78,65 +132,22 @@ class PacketDecoder(object):
 		out: dict
 		"""
 		if eth.type == dpkt.ethernet.ETH_TYPE_ARP:
-			arp = eth.data
-			if arp.op == dpkt.arp.ARP_OP_REPLY:
-				msg={'type':'arp', 'mac': self.add_colons_to_mac( binascii.hexlify(arp.sha) ),'ipv4':socket.inet_ntoa(arp.spa)}
-				return msg
-			else: return {}
+			return ARP(eth.data)
+			
 		#elif eth.type == dpkt.ethernet.ETH_TYPE_IP6:
 		elif eth.type == dpkt.ethernet.ETH_TYPE_IP:			
 			ip = eth.data
 			if ip.p == dpkt.ip.IP_PROTO_UDP:
 				udp = ip.data
-
+				
+				# these aren't useful
 #				if udp.dport == 53: #DNS
-#					dns = dpkt.dns.DNS(udp.data)
-#					for rr in dns.an:
-#						h = self.getRecord(rr)
-#						print h
+#					return DNS(udp.data)
 						
 				if udp.dport == 5353: # mDNS
-					msg = {}					
-					try:
-						mdns = dpkt.dns.DNS(udp.data)	 
-					except dpkt.Error:	
-						#print 'dpkt.Error' 
-						return msg
-					except (IndexError, TypeError):
-						# dpkt shouldn't do this, but it does in some cases
-						#print 'other error'
-						return msg
-	
-					if mdns.qr != dpkt.dns.DNS_R: return msg
-					if mdns.opcode != dpkt.dns.DNS_QUERY: return msg
-					if mdns.rcode != dpkt.dns.DNS_RCODE_NOERR: return msg
-					
-					msg['type'] = 'mdns'
-					ans = []
-
-					for rr in mdns.an:
-						h = self.getRecord(rr)
-						
-						# check if empty
-						if h: ans.append( h )
-						
-					msg['rr'] = ans
-					return msg
+					return mDNS(udp.data)
 				else: return {}
 			else: return {}
-		
-	def getRecord(self,rr):
-		"""
-		The response records (rr) in a dns packet all refer to the same host
-		"""
-		if	 rr.type == 1:	return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata),'hostname': rr.name}
-		elif rr.type == 28: return {'type': 'aaaa', 'ipv6': socket.inet_ntop(socket.AF_INET6, rr.rdata), 'hostname': rr.name}
-		elif rr.type == 5:	return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
-		elif rr.type == 13: return {'type': 'hostinfo', 'hostname': rr.name, 'info': rr.rdata}
-		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]} 
-		elif rr.type == 12: return {'type': 'ptr'} 
-		elif rr.type == 16: return {'type': 'txt'}	
-		elif rr.type == 10: return {'type': 'wtf'}	
 
 #########################
 
