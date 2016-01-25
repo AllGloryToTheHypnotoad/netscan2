@@ -1,42 +1,45 @@
 #!/usr/bin/env python
 
-import datetime		# time stamp
-import pcapy		# passive mapping
+# import datetime		# time stamp
+# import pcapy		# passive mapping
 import os			# check sudo
-import dpkt			# parse packets
+# import dpkt			# parse packets
 import binascii		# get MAC addr on ARP messages
 import netaddr		# ipv4/6 addresses, address space: 192.168.5.0/24
-# import pprint as pp # display info
+import pprint as pp # display info
 import commands		# arp-scan
 import requests		# mac api
 import socket		# ordering
-import sys			# get platform (linux or linux2)
+import sys			# get platform (linux or linux2 or darwin)
 import subprocess	# use commandline
 import random		# Pinger uses it when creating ICMP packets
-from awake import wol # wake on lan
+
+# from awake import wol # wake on lan
 from lib import *
 
-"""
-[kevin@Tardis test]$ ./pmap5.py -p test2.pcap -d
+####################################################	
 
-sudo tcpdump -s 0 -i en1 -w test.pcap
--s 0 will set the capture byte to its maximum i.e. 65535 and will not truncate
--i en1 captures Ethernet interface
--w test.pcap will create that pcap file
+class GetHostName(object):
+	def __init__(self,ip):
+		"""Use the avahi (zeroconfig) tools or dig to find a host name
 
-tcpdump -qns 0 -X -r osx.pcap
+		in: ip
+		out: string w/ host name
+		"""
+		name = 'unknown'
+		if sys.platform == 'linux' or sys.platform == 'linux2':
+			name = self.cmdLine("avahi-resolve-address %s | awk '{print $2}'"%(ip)).rstrip().rstrip('.')
+		elif sys.platform == 'darwin':
+			name = self.cmdLine('dig +short -x %s -p 5353 @224.0.0.251'%ip).rstrip().rstrip('.')
+			
+		if name.find('connection timed out') >= 0: name = 'unknown'
+		if name == '': name = 'unknown'
+		
+		self.name = name
+		
+	def cmdLine(self,cmd):
+		return subprocess.Popen([cmd], stdout = subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 
-[kevin@Tardis tmp]$ sudo tcpdump -w osx.pcap
-tcpdump: data link type PKTAP
-tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 bytes
-^C4414 packets captured
-4416 packets received by filter
-0 packets dropped by kernel
-
-"""
-
-
-####################################################
 
 class ArpScan(object):
 	def scan(self,dev):
@@ -47,7 +50,7 @@ class ArpScan(object):
 		 -l use local networking info
 		 -I use a specific interface
 	 
-		 return {mac: ip}
+		 return {mac: mac_addr, ipv4: ip_addr}
 		 
 		 Need to invest the time to do this myself w/o using commandline
 		"""
@@ -58,149 +61,9 @@ class ArpScan(object):
 		d = []
 		for i in range(2,ln-3):
 			b = a[i].split()
-			d.append( {'type':'arp', 'mac': b[1],'ipv4': b[0]} )
+			d.append( {'mac': b[1],'ipv4': b[0]} )
 	
 		return d
-
-class Analyzer(object):
-
-	def getHostName(self,ip):
-		"""Use the avahi (zeroconfig) tools to find a host name ... this only works
-		on Linux using the avahi tools.
-
-		in: ip
-		out: string w/ host name
-		"""
-		name = 'unknown'
-		if sys.platform == 'linux' or sys.platform == 'linux2':
-			cmd = ["avahi-resolve-address %s | awk '{print $2}'"%(ip)]
-			#name  = self.runProcess(cmd)
-			name = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-			name = name.rstrip()
-			if name == '': name = 'unknown'
-		return name
-	
-	def find(self,net,ip):
-		"""
-		finds a recored in a list
-		"""
-		return next(x for x in net if x['ipv4'] == ip)
-#		
-#		print 'find:',ip
-#		for r in net:
-#			print r['ipv4'] 
-#			if r['ipv4'] == ip: return r
-				
-	def check(self,net,rec):
-		"""
-		check if an ipv4 host record already exists
-		"""
-		for r in net:
-			if r['ipv4'] == rec['ipv4']: return True
-		return False
-	
-#	def checkSrv(self,ar,svc):
-#		"""
-#		check if a service record already exists
-#		"""
-#		for s in ar:
-#			if s == svc: return True
-#		return False	
-		
-	def merge(self,nmap,active):
-		"""
-		Merges the active and passive scans
-		
-		map - records found during passive mapping
-		active - active scan results
-		
-		*---
-		  AAAA: fe80::ca2a:14ff:fe1f:1869 is Dalek.local
-		*---
-		  A: 192.168.1.13 is Dalek.local
-		*---
-		  ARP: 192.168.1.13 is c8:2a:14:1f:18:69
-		*---
-		  TXT: 192.168.1.19 _device-info[_tcp] type: 16
-		*---
-		"""
-		
-		for i in active:
-			nmap.append(i)
-		
-		net = []
-		
-		# go thru everything passively collected and build a network map
-		for i in nmap:
-			# mdns are the primary good ones
-			if i['type'] == 'mdns':
-				rec={'tcp':[],'udp':[]}
-				ar = i['rr']
-				
-				# for each mdns record type: a, aaaa, srv, ...
-				for rr in ar:
-					if rr['type'] == 'a': 
-						rec['ipv4'] = rr['ipv4']
-						rec['hostname'] = rr['hostname'] 
-					elif rr['type'] == 'aaaa': rec['ipv6'] = rr['ipv6'] 
-					elif rr['type'] == 'srv':
-						srv = ( rr['port'], rr['srv'][1:] )
-						if rr['proto'] == '_tcp': 
-							rec['tcp'].append(srv)
-						elif rr['proto'] == '_udp': 
-							rec['udp'].append(srv)
-				
-				# see if mdns has already been found
-				if 'ipv4' in rec:
-					if not self.check(net,rec): net.append(rec)
-		
-		# arp is the other most useful passively collected, go through and find hosts
-		# not found in the passive mapping or update hosts with other info (mac, ports, etc)
-		
-		# start with arp to get all hosts found
-		for i in nmap:	
-			if i['type'] == 'arp':
-				found = False
-				# see if the ip has been found, if so, add the mac addr
-				for host in net:
-					if i['ipv4'] == host['ipv4']:
-						host['mac'] = i['mac']
-						host['os'] = macLookup(i['mac'])['company']
-						found = True
-				# if not found, then add a new host record
-				if not found:
-					net.append({'ipv4': i['ipv4'], 'mac': i['mac'], 'os': macLookup(i['mac'])['company']})
-		
-		# now do ports after all hosts found
-		for i in nmap:	
-			if i['type'] == 'portscan':
-#				print 'portscan',i['ipv4'],i['ports']
-				host = self.find(net,i['ipv4'])
-				if 'tcp' not in host:
-					host['tcp'] = i['ports']
-				else:
-					host['tcp'] = list(set( i['ports'] + host['tcp'] )) # combine port arrays
-				
-				if 'udp' not in host:
-					host['udp'] = []
-
-						
-			
-		# go through everything and add some other info
-		for i in net:	
-			if 'hostname' not in i: i['hostname'] = self.getHostName( i['ipv4'] )
-			if 'mac' in i and 'os' not in i: i['os'] = macLookup(i['mac'])['company']
-			
-			i['lastseen'] = str(datetime.datetime.now().strftime('%H:%M %a %d %b %Y'))
-			i['status'] = 'up'
-			
-			if 'tcp' in i and i['tcp']: i['tcp'] = list(set( i['tcp'] )) 
-			if 'udp' in i and i['udp']: i['udp'] = list(set( i['udp'] ))
-		
-		return net
-
-####################################################	
-
 
 class IP(object):
 	"""
@@ -323,9 +186,6 @@ class PortScanner(object):
 	def __init__(self,ports=range(1,1024)):
 		self.ports = ports
 		
-# 	def getBanner(self,ip,port):
-# 		return ''
-		
 	def openPort(self,ip,port):
 		try:			
 			self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -362,63 +222,53 @@ class ActiveMapper(object):
 	Actively scans a network (arp-scan) and then pings each host for open ports.
 	"""
 	def __init__(self,ports=range(1,1024)):
-		self.ps = PortScanner(ports)
-		self.asn = ArpScan()
-		
-# 	def wol(self, mac):
-# 		"""
-# 		Wake-on-lan (wol)
-# 		in: hw addr
-# 		out: None
-# 		"""
-# 		wol.send_magic_packet(mac)
+		self.ports = ports
 			
 	def scan(self,dev):
 		"""
-		arpscan - {'type':'arp', 'mac': b[1],'ipv4': b[0]}
-		portscan - [ (svc,port) ]
-		activescan - {'type': 'portscan', 'ipv4': ip, 'ports': [portscan]}
+		arpscan - {'mac': mac,'ipv4': ip}
+		
+		in: device for arp-scan to use (ie. en1)
+		out: [host1,host2,...]
+		      where host is: {'mac': '34:62:98:03:b6:b8', 'hostname': 'Airport-New.local', 'ipv4': '192.168.18.76' 'tcp':[(port,svc),...)]}
 		"""
-		arp = self.asn.scan(dev)
+		arpscanner = ArpScan()
+		arp = arpscanner.scan(dev)
+		print 'Found '+str(len(arp))+' hosts'
 		
 		ports = []
+		portscanner = PortScanner(self.ports)
+		counter = 0
 		for host in arp:
-			#print host
-			p = self.ps.scan( host['ipv4'] )
-			if p: ports.append( {'type': 'portscan', 'ipv4': host['ipv4'], 'ports':p} )
+			# find the hostname
+			host['hostname'] = GetHostName( host['ipv4'] ).name
 			
-		for i in arp:
-			ports.append(i)
+			# scan the host for open tcp ports
+			p = portscanner.scan( host['ipv4'] )
+			host['tcp'] = p
 			
-		return ports
+			counter+=1
+# 			print 'host['+str(counter)+']: ' # need something better
+			print 'host[%d]: %s %s with %d open ports'%(counter,host['hostname'],host['ipv4'],len(host['tcp']))
+			
+		return arp
 
 
 ########################################################
 		
 def main():
-	# en - dev
-
 	# check for sudo/root privileges
 	if os.geteuid() != 0:
-			exit('You need to be root/sudo for real-time ... exiting')
-
-	am = new ActiveMapper()
-	loop = True
+		exit('You need to be root/sudo ... exiting')
 	
-		#start sniffing packets
-		while(loop):
-			try:
-				??
-			except KeyboardInterrupt:
-				print 'You hit ^C, exiting PassiveMapper ... bye'
-				exit()
-			except:
-				continue
-		
-			self.process(header,data)
+	try:
+		am = ActiveMapper(range(1,100))
+		hosts = am.scan('en1')
+		pp.pprint( hosts )
+		return hosts
+	except KeyboardInterrupt:
+		exit('You hit ^C, exiting PassiveMapper ... bye')
 	
-		return self.map
-		
  
 if __name__ == "__main__":
 	main()
