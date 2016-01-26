@@ -36,7 +36,61 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 
 
 #######################
+# class DNS(object):
+# 	def __init(self,udp)__:
+# 		dns = dpkt.dns.DNS(udp.data)
+# 		for rr in dns.an:
+# 			h = self.getRecord(rr)
+# 			print h
 
+class ARP(object):
+	def __init__(self, arp):
+		if arp.op == dpkt.arp.ARP_OP_REPLY:
+			msg={'type':'arp', 'mac': self.add_colons_to_mac( binascii.hexlify(arp.sha) ),'ipv4':socket.inet_ntoa(arp.spa)}
+			return msg
+		else: return {}
+
+class mDNS(object):
+	def __init__(self,udp):
+		msg = {}					
+		try:
+			mdns = dpkt.dns.DNS(udp.data)	 
+		except dpkt.Error:	
+			#print 'dpkt.Error' 
+			return msg
+		except (IndexError, TypeError):
+			# dpkt shouldn't do this, but it does in some cases
+			#print 'other error'
+			return msg
+
+		if mdns.qr != dpkt.dns.DNS_R: return msg
+		if mdns.opcode != dpkt.dns.DNS_QUERY: return msg
+		if mdns.rcode != dpkt.dns.DNS_RCODE_NOERR: return msg
+	
+		msg['type'] = 'mdns'
+		ans = []
+
+		for rr in mdns.an:
+			h = self.getRecord(rr)
+		
+			# check if empty
+			if h: ans.append( h )
+		
+		msg['rr'] = ans
+		return msg
+
+	def getRecord(self,rr):
+		"""
+		The response records (rr) in a dns packet all refer to the same host
+		"""
+		if	 rr.type == 1:	return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata),'hostname': rr.name}
+		elif rr.type == 28: return {'type': 'aaaa', 'ipv6': socket.inet_ntop(socket.AF_INET6, rr.rdata), 'hostname': rr.name}
+		elif rr.type == 5:	return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
+		elif rr.type == 13: return {'type': 'hostinfo', 'hostname': rr.name, 'info': rr.rdata}
+		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]} 
+		elif rr.type == 12: return {'type': 'ptr'} 
+		elif rr.type == 16: return {'type': 'txt'}	
+		elif rr.type == 10: return {'type': 'wtf'}	
 
 class PacketDecoder(object):
 	"""
@@ -78,105 +132,62 @@ class PacketDecoder(object):
 		out: dict
 		"""
 		if eth.type == dpkt.ethernet.ETH_TYPE_ARP:
-			arp = eth.data
-			if arp.op == dpkt.arp.ARP_OP_REPLY:
-				msg={'type':'arp', 'mac': self.add_colons_to_mac( binascii.hexlify(arp.sha) ),'ipv4':socket.inet_ntoa(arp.spa)}
-				return msg
-			else: return {}
+			return ARP(eth.data)
+			
 		#elif eth.type == dpkt.ethernet.ETH_TYPE_IP6:
 		elif eth.type == dpkt.ethernet.ETH_TYPE_IP:			
 			ip = eth.data
 			if ip.p == dpkt.ip.IP_PROTO_UDP:
 				udp = ip.data
-
+				
+				# these aren't useful
 #				if udp.dport == 53: #DNS
-#					dns = dpkt.dns.DNS(udp.data)
-#					for rr in dns.an:
-#						h = self.getRecord(rr)
-#						print h
+#					return DNS(udp.data)
 						
 				if udp.dport == 5353: # mDNS
-					msg = {}					
-					try:
-						mdns = dpkt.dns.DNS(udp.data)	 
-					except dpkt.Error:	
-						#print 'dpkt.Error' 
-						return msg
-					except (IndexError, TypeError):
-						# dpkt shouldn't do this, but it does in some cases
-						#print 'other error'
-						return msg
-	
-					if mdns.qr != dpkt.dns.DNS_R: return msg
-					if mdns.opcode != dpkt.dns.DNS_QUERY: return msg
-					if mdns.rcode != dpkt.dns.DNS_RCODE_NOERR: return msg
-					
-					msg['type'] = 'mdns'
-					ans = []
-
-					for rr in mdns.an:
-						h = self.getRecord(rr)
-						
-						# check if empty
-						if h: ans.append( h )
-						
-					msg['rr'] = ans
-					return msg
+					return mDNS(udp.data)
 				else: return {}
 			else: return {}
-		
-	def getRecord(self,rr):
-		"""
-		The response records (rr) in a dns packet all refer to the same host
-		"""
-		if	 rr.type == 1:	return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata),'hostname': rr.name}
-		elif rr.type == 28: return {'type': 'aaaa', 'ipv6': socket.inet_ntop(socket.AF_INET6, rr.rdata), 'hostname': rr.name}
-		elif rr.type == 5:	return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
-		elif rr.type == 13: return {'type': 'hostinfo', 'hostname': rr.name, 'info': rr.rdata}
-		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]} 
-		elif rr.type == 12: return {'type': 'ptr'} 
-		elif rr.type == 16: return {'type': 'txt'}	
-		elif rr.type == 10: return {'type': 'wtf'}	
 
 #########################
 
-def macLookup(mac):
-	"""
-	json responce from www.macvendorlookup.com:
-	
-	{u'addressL1': u'1 Infinite Loop',
-	u'addressL2': u'',
-	u'addressL3': u'Cupertino CA 95014',
-	u'company': u'Apple',
-	u'country': u'UNITED STATES',
-	u'endDec': u'202412195315711',
-	u'endHex': u'B817C2FFFFFF',
-	u'startDec': u'202412178538496',
-	u'startHex': u'B817C2000000',
-	u'type': u'MA-L'}
-	"""
-	try:
-		r = requests.get('http://www.macvendorlookup.com/api/v2/' + mac)
-	except requests.exceptions.HTTPError as e:
-		print "HTTPError:", e.message
-		return {'company':'unknown'}
-	
-	if r.status_code == 204: # no content found, bad MAC addr
-		print 'ERROR: Bad MAC addr:',mac
-		return {'company':'unknown'}
-	elif r.headers['content-type'] != 'application/json':
-		print 'ERROR: Wrong content type:', r.headers['content-type']
-		return {'company':'unknown'}
-	a={}
-	
-	try:
-		a = r.json()[0]
-		#print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
-	except:
-		print 'ERROR:',r.status_code,r.headers,r.ok,r.text,r.reason
-		a = {'company':'unknown'}
-	
-	return a
+# def macLookup(mac):
+# 	"""
+# 	json responce from www.macvendorlookup.com:
+# 	
+# 	{u'addressL1': u'1 Infinite Loop',
+# 	u'addressL2': u'',
+# 	u'addressL3': u'Cupertino CA 95014',
+# 	u'company': u'Apple',
+# 	u'country': u'UNITED STATES',
+# 	u'endDec': u'202412195315711',
+# 	u'endHex': u'B817C2FFFFFF',
+# 	u'startDec': u'202412178538496',
+# 	u'startHex': u'B817C2000000',
+# 	u'type': u'MA-L'}
+# 	"""
+# 	try:
+# 		r = requests.get('http://www.macvendorlookup.com/api/v2/' + mac)
+# 	except requests.exceptions.HTTPError as e:
+# 		print "HTTPError:", e.message
+# 		return {'company':'unknown'}
+# 	
+# 	if r.status_code == 204: # no content found, bad MAC addr
+# 		print 'ERROR: Bad MAC addr:',mac
+# 		return {'company':'unknown'}
+# 	elif r.headers['content-type'] != 'application/json':
+# 		print 'ERROR: Wrong content type:', r.headers['content-type']
+# 		return {'company':'unknown'}
+# 	a={}
+# 	
+# 	try:
+# 		a = r.json()[0]
+# 		#print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
+# 	except:
+# 		print 'ERROR:',r.status_code,r.headers,r.ok,r.text,r.reason
+# 		a = {'company':'unknown'}
+# 	
+# 	return a
 	
 
 
@@ -184,29 +195,29 @@ def macLookup(mac):
 
 ####################################################
 
-class ArpScan(object):
-	def scan(self,dev):
-		"""
-		brew install arp-scan
-	
-		arp-scan -l -I en1
-		 -l use local networking info
-		 -I use a specific interface
-	 
-		 return {mac: ip}
-		 
-		 Need to invest the time to do this myself w/o using commandline
-		"""
-		arp = commands.getoutput("arp-scan -l -I %s"%(dev))
-		a = arp.split('\n')
-		ln = len(a)
-	
-		d = []
-		for i in range(2,ln-3):
-			b = a[i].split()
-			d.append( {'type':'arp', 'mac': b[1],'ipv4': b[0]} )
-	
-		return d
+# class ArpScan(object):
+# 	def scan(self,dev):
+# 		"""
+# 		brew install arp-scan
+# 	
+# 		arp-scan -l -I en1
+# 		 -l use local networking info
+# 		 -I use a specific interface
+# 	 
+# 		 return {mac: ip}
+# 		 
+# 		 Need to invest the time to do this myself w/o using commandline
+# 		"""
+# 		arp = commands.getoutput("arp-scan -l -I %s"%(dev))
+# 		a = arp.split('\n')
+# 		ln = len(a)
+# 	
+# 		d = []
+# 		for i in range(2,ln-3):
+# 			b = a[i].split()
+# 			d.append( {'type':'arp', 'mac': b[1],'ipv4': b[0]} )
+# 	
+# 		return d
 
 class Analyzer(object):
 
@@ -445,162 +456,210 @@ class IP(object):
 		# nothing found
 		return ''
 
-class Pinger(object):
-	"""
-	Determine if host is up. 
-	
-	ArpScan is probably better ... get MAC info from it
-	
-	this uses netaddr and random ... can remove if not using
-	"""
-	def __init__(self):
-		comp = IP()
-		self.sniffer = socket.socket(socket.AF_INET, socket.SOCK_RAW,socket.IPPROTO_ICMP)
-		self.sniffer.bind((comp.ip,1))
-		self.sniffer.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-		self.sniffer.settimeout(1)
-		
-		self.udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	
-	def createICMP(self,msg):
-		echo = dpkt.icmp.ICMP.Echo()
-		echo.id = random.randint(0, 0xffff)
-		echo.seq = random.randint(0, 0xffff)
-		echo.data = msg
+# class Pinger(object):
+# 	"""
+# 	Determine if host is up. 
+# 	
+# 	ArpScan is probably better ... get MAC info from it
+# 	
+# 	this uses netaddr and random ... can remove if not using
+# 	"""
+# 	def __init__(self):
+# 		comp = IP()
+# 		self.sniffer = socket.socket(socket.AF_INET, socket.SOCK_RAW,socket.IPPROTO_ICMP)
+# 		self.sniffer.bind((comp.ip,1))
+# 		self.sniffer.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+# 		self.sniffer.settimeout(1)
+# 		
+# 		self.udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# 	
+# 	def createICMP(self,msg):
+# 		echo = dpkt.icmp.ICMP.Echo()
+# 		echo.id = random.randint(0, 0xffff)
+# 		echo.seq = random.randint(0, 0xffff)
+# 		echo.data = msg
+# 
+# 		icmp = dpkt.icmp.ICMP()
+# 		icmp.type = dpkt.icmp.ICMP_ECHO
+# 		icmp.data = echo
+# 		return str(icmp)
+# 	
+# 	def ping(self,ip):
+# 		#print 'Ping',ip
+# 		try:
+# 			msg = self.createICMP('test')
+# 			self.udp.sendto(msg,(ip, 10))
+# 		except socket.error as e:
+# 			print e,'ip:',ip
+# 			
+# 		try:
+# 			self.sniffer.settimeout(0.01)
+# 			raw_buffer = self.sniffer.recvfrom(65565)[0]
+# 		except socket.timeout:
+# 			return ''
+# 		
+# 		return raw_buffer
+# 	
+# 	def scanNetwork(self,subnet):
+# 		"""
+# 		For our scanner, we are looking for a type value of 3 and a code value of 3, which 
+# 		are the Destination Unreachable class and Port Unreachable errors in ICMP messages.
+# 		"""
+# 		net = {}
+# 	
+# 		# continually read in packets and parse their information
+# 		for ip in netaddr.IPNetwork(subnet).iter_hosts():
+# 			raw_buffer = self.ping(str(ip))
+# 		
+# 			if not raw_buffer:
+# 				continue
+# 			
+# 			ip = dpkt.ip.IP(raw_buffer)
+# 			src = socket.inet_ntoa(ip.src)
+# 			# dst = socket.inet_ntoa(ip.dst)
+# 			icmp = ip.data
+# 		
+# 			# ICMP_UNREACH = 3
+# 			# ICMP_UNREACH_PORT = 3
+# 			# type 3 (unreachable) code 3 (destination port)
+# 			# type 5 (redirect) code 1 (host) - router does this
+# 			if icmp.type == dpkt.icmp.ICMP_UNREACH and icmp.code == dpkt.icmp.ICMP_UNREACH_PORT:
+# 				net[src] = 'up'
+# 		
+# 		return net
 
-		icmp = dpkt.icmp.ICMP()
-		icmp.type = dpkt.icmp.ICMP_ECHO
-		icmp.data = echo
-		return str(icmp)
-	
-	def ping(self,ip):
-		#print 'Ping',ip
-		try:
-			msg = self.createICMP('test')
-			self.udp.sendto(msg,(ip, 10))
-		except socket.error as e:
-			print e,'ip:',ip
-			
-		try:
-			self.sniffer.settimeout(0.01)
-			raw_buffer = self.sniffer.recvfrom(65565)[0]
-		except socket.timeout:
-			return ''
-		
-		return raw_buffer
-	
-	def scanNetwork(self,subnet):
-		"""
-		For our scanner, we are looking for a type value of 3 and a code value of 3, which 
-		are the Destination Unreachable class and Port Unreachable errors in ICMP messages.
-		"""
-		net = {}
-	
-		# continually read in packets and parse their information
-		for ip in netaddr.IPNetwork(subnet).iter_hosts():
-			raw_buffer = self.ping(str(ip))
-		
-			if not raw_buffer:
-				continue
-			
-			ip = dpkt.ip.IP(raw_buffer)
-			src = socket.inet_ntoa(ip.src)
-			# dst = socket.inet_ntoa(ip.dst)
-			icmp = ip.data
-		
-			# ICMP_UNREACH = 3
-			# ICMP_UNREACH_PORT = 3
-			# type 3 (unreachable) code 3 (destination port)
-			# type 5 (redirect) code 1 (host) - router does this
-			if icmp.type == dpkt.icmp.ICMP_UNREACH and icmp.code == dpkt.icmp.ICMP_UNREACH_PORT:
-				net[src] = 'up'
-		
-		return net
 
 
+# class PortScanner(object):
+# 	"""
+# 	Scans a single host and finds all open ports with in its range (1 ... n).
+# 	"""
+# 	def __init__(self,ports=range(1,1024)):
+# 		self.ports = ports
+# 		
+# # 	def getBanner(self,ip,port):
+# # 		return ''
+# 		
+# 	def openPort(self,ip,port):
+# 		try:			
+# 			self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# 			socket.setdefaulttimeout(0.01)
+# 			self.sock.connect((ip, port))
+# 			return True
+# 		except KeyboardInterrupt:
+# 			print "You pressed Ctrl+C, killing PortScanner"
+# 			exit()	
+# 		except:
+# 			self.sock.close()
+# 			return False
+# 			
+# 	def scan(self,ip):
+# 		tcp = []
+# 		
+# 		for port in self.ports: 
+# 			good = self.openPort(ip,port)
+# 			if good:
+# 				svc = ''
+# 				try:
+# 					svc = socket.getservbyport(port).strip()
+# 				except:
+# 					svc = 'unknown'
+# 				tcp.append( (port,svc) )
+# #			if banner and good:
+# #				ports[str(port)+'_banner'] = self.getBanner(ip,port)
+# 		
+# 		self.sock.close()
+# 		return tcp
 
-class PortScanner(object):
-	"""
-	Scans a single host and finds all open ports with in its range (1 ... n).
-	"""
-	def __init__(self,ports=range(1,1024)):
-		self.ports = ports
-		
-# 	def getBanner(self,ip,port):
-# 		return ''
-		
-	def openPort(self,ip,port):
-		try:			
-			self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			socket.setdefaulttimeout(0.01)
-			self.sock.connect((ip, port))
-			return True
-		except KeyboardInterrupt:
-			print "You pressed Ctrl+C, killing PortScanner"
-			exit()	
-		except:
-			self.sock.close()
-			return False
-			
-	def scan(self,ip):
-		tcp = []
-		
-		for port in self.ports: 
-			good = self.openPort(ip,port)
-			if good:
-				svc = ''
-				try:
-					svc = socket.getservbyport(port).strip()
-				except:
-					svc = 'unknown'
-				tcp.append( (port,svc) )
-#			if banner and good:
-#				ports[str(port)+'_banner'] = self.getBanner(ip,port)
-		
-		self.sock.close()
-		return tcp
-
-class ActiveMapper(object):
-	"""
-	Actively scans a network (arp-scan) and then pings each host for open ports.
-	"""
-	def __init__(self,ports=range(1,1024)):
-		self.ps = PortScanner(ports)
-		self.asn = ArpScan()
-		
-	def wol(self, mac):
-		"""
-		Wake-on-lan (wol)
-		in: hw addr
-		out: None
-		"""
-		wol.send_magic_packet(mac)
-			
-	def scan(self,dev):
-		"""
-		arpscan - {'type':'arp', 'mac': b[1],'ipv4': b[0]}
-		portscan - [ (svc,port) ]
-		activescan - {'type': 'portscan', 'ipv4': ip, 'ports': [portscan]}
-		"""
-		arp = self.asn.scan(dev)
-		
-		ports = []
-		for host in arp:
-			#print host
-			p = self.ps.scan( host['ipv4'] )
-			if p: ports.append( {'type': 'portscan', 'ipv4': host['ipv4'], 'ports':p} )
-			
-		for i in arp:
-			ports.append(i)
-			
-		return ports
+# class ActiveMapper(object):
+# 	"""
+# 	Actively scans a network (arp-scan) and then pings each host for open ports.
+# 	"""
+# 	def __init__(self,ports=range(1,1024)):
+# 		self.ps = PortScanner(ports)
+# 		self.asn = ArpScan()
+# 		
+# 	def wol(self, mac):
+# 		"""
+# 		Wake-on-lan (wol)
+# 		in: hw addr
+# 		out: None
+# 		"""
+# 		wol.send_magic_packet(mac)
+# 			
+# 	def scan(self,dev):
+# 		"""
+# 		arpscan - {'type':'arp', 'mac': b[1],'ipv4': b[0]}
+# 		portscan - [ (svc,port) ]
+# 		activescan - {'type': 'portscan', 'ipv4': ip, 'ports': [portscan]}
+# 		"""
+# 		arp = self.asn.scan(dev)
+# 		
+# 		ports = []
+# 		for host in arp:
+# 			#print host
+# 			p = self.ps.scan( host['ipv4'] )
+# 			if p: ports.append( {'type': 'portscan', 'ipv4': host['ipv4'], 'ports':p} )
+# 			
+# 		for i in arp:
+# 			ports.append(i)
+# 			
+# 		return ports
 
 
 ########################################################
 		
 def main():
+	# en - dev
+
+	# check for sudo/root privileges
+	if os.geteuid() != 0:
+			exit('You need to be root/sudo for real-time ... exiting')
+
+	mode = 'live'
 	
-	print('Hello and goodbye!')
+	map = []
+	p = PacketDecoder()
+
+	if mode == 'off-line':
+		# capture first
+		???
+		
+		# open file
+		cap = pcapy.open_offline(fname)
+		
+		cap.loop(0,self.process)
+	
+# 		return map
+
+	else:
+# 	def live(self,dev,loop=500):
+		"""
+		open device
+		# Arguments here are:
+		#	device
+		#	snaplen (maximum number of bytes to capture _per_packet_)
+		#	promiscious mode (1 for true), need False for OSX
+		#	timeout (in milliseconds)
+		"""	
+		# real-time
+		cap = pcapy.open_live(dev , 2048 ,False, 50)
+		#cap.setfilter('udp')
+	
+		#start sniffing packets
+		while(loop):
+			try:
+				loop -= 1 
+				(header, data) = cap.next()
+			except KeyboardInterrupt:
+				print 'You hit ^C, exiting PassiveMapper ... bye'
+				exit()
+			except:
+				continue
+		
+			self.process(header,data)
+	
+		return self.map
 		
  
 if __name__ == "__main__":
