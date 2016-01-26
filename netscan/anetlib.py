@@ -21,6 +21,48 @@ from lib import *
 
 ####################################################	
 
+class MacLookup(object):
+	def __init__(self,mac):
+		self.vendor = self.get(mac)
+		
+	def get(self,mac):	
+		"""
+		json responce from www.macvendorlookup.com:
+	
+		{u'addressL1': u'1 Infinite Loop',
+		u'addressL2': u'',
+		u'addressL3': u'Cupertino CA 95014',
+		u'company': u'Apple',
+		u'country': u'UNITED STATES',
+		u'endDec': u'202412195315711',
+		u'endHex': u'B817C2FFFFFF',
+		u'startDec': u'202412178538496',
+		u'startHex': u'B817C2000000',
+		u'type': u'MA-L'}
+		"""
+		try:
+			r = requests.get('http://www.macvendorlookup.com/api/v2/' + mac)
+		except requests.exceptions.HTTPError as e:
+			print "HTTPError:", e.message
+			return {'company':'unknown'}
+	
+		if r.status_code == 204: # no content found, bad MAC addr
+			print 'ERROR: Bad MAC addr:',mac
+			return {'company':'unknown'}
+		elif r.headers['content-type'] != 'application/json':
+			print 'ERROR: Wrong content type:', r.headers['content-type']
+			return {'company':'unknown'}
+		a={}
+	
+		try:
+			a['company'] = r.json()[0]['company']
+			#print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
+		except:
+			print 'ERROR:',r.status_code,r.headers,r.ok,r.text,r.reason
+			a = {'company':'unknown'}
+	
+		return a
+
 class GetHostName(object):
 	def __init__(self,ip):
 		"""Use the avahi (zeroconfig) tools or dig to find a host name
@@ -243,6 +285,9 @@ class ActiveMapper(object):
 		for host in arp:
 			# find the hostname
 			host['hostname'] = GetHostName( host['ipv4'] ).name
+			
+			# get vendor info
+			host['vendor'] = MacLookup(host['mac']).vendor
 			
 			# scan the host for open tcp ports
 			p = portscanner.scan( host['ipv4'] )
