@@ -13,7 +13,7 @@ import socket		# ordering
 import sys			# get platform (linux or linux2)
 import subprocess	# use commandline
 import random		# Pinger uses it when creating ICMP packets
-from awake import wol # wake on lan
+# from awake import wol # wake on lan
 
 """
 [kevin@Tardis test]$ ./pmap5.py -p test2.pcap -d
@@ -148,50 +148,6 @@ class PacketDecoder(object):
 					return mDNS(udp.data)
 				else: return {}
 			else: return {}
-
-#########################
-
-# def macLookup(mac):
-# 	"""
-# 	json responce from www.macvendorlookup.com:
-# 	
-# 	{u'addressL1': u'1 Infinite Loop',
-# 	u'addressL2': u'',
-# 	u'addressL3': u'Cupertino CA 95014',
-# 	u'company': u'Apple',
-# 	u'country': u'UNITED STATES',
-# 	u'endDec': u'202412195315711',
-# 	u'endHex': u'B817C2FFFFFF',
-# 	u'startDec': u'202412178538496',
-# 	u'startHex': u'B817C2000000',
-# 	u'type': u'MA-L'}
-# 	"""
-# 	try:
-# 		r = requests.get('http://www.macvendorlookup.com/api/v2/' + mac)
-# 	except requests.exceptions.HTTPError as e:
-# 		print "HTTPError:", e.message
-# 		return {'company':'unknown'}
-# 	
-# 	if r.status_code == 204: # no content found, bad MAC addr
-# 		print 'ERROR: Bad MAC addr:',mac
-# 		return {'company':'unknown'}
-# 	elif r.headers['content-type'] != 'application/json':
-# 		print 'ERROR: Wrong content type:', r.headers['content-type']
-# 		return {'company':'unknown'}
-# 	a={}
-# 	
-# 	try:
-# 		a = r.json()[0]
-# 		#print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
-# 	except:
-# 		print 'ERROR:',r.status_code,r.headers,r.ok,r.text,r.reason
-# 		a = {'company':'unknown'}
-# 	
-# 	return a
-	
-
-
-
 
 ####################################################
 
@@ -415,198 +371,6 @@ class PassiveMapper(object):
 	
 		return self.map
 
-
-class IP(object):
-	"""
-	Gets the IP and MAC addresses for the localhost
-	"""
-	ip = 'x'
-	mac = 'x'
-
-	def __init__(self):
-		"""Everything is done in init(), don't call any methods, just access ip or mac."""
-		self.mac = self.getHostMAC()
-		self.ip = self.getHostIP()
-
-	def getHostIP(self):
-		"""
-		Need to get the localhost IP address
-		in: none
-		out: returns the host machine's IP address
-		"""
-		host_name = socket.gethostname()
-		if '.local' not in host_name: host_name = host_name + '.local'
-		ip = socket.gethostbyname(host_name)
-		return ip
-
-	def getHostMAC(self,dev='en1'):
-		"""
-		Major flaw of NMAP doesn't allow you to get the localhost's MAC address, so this 
-		is a work around.
-		in: none
-		out: string of hex for MAC address 'aa:bb:11:22..' or empty string if error
-		"""
-		# this doesn't work, could return any network address (en0, en1, bluetooth, etc)
-		#return ':'.join(re.findall('..', '%012x' % uuid.getnode()))
-		mac = commands.getoutput("ifconfig " + dev + "| grep ether | awk '{ print $2 }'")
-		
-		# double check it is a valid mac address
-		if len(mac) == 17 and len(mac.split(':')) == 6: return mac
-		
-		# nothing found
-		return ''
-
-# class Pinger(object):
-# 	"""
-# 	Determine if host is up. 
-# 	
-# 	ArpScan is probably better ... get MAC info from it
-# 	
-# 	this uses netaddr and random ... can remove if not using
-# 	"""
-# 	def __init__(self):
-# 		comp = IP()
-# 		self.sniffer = socket.socket(socket.AF_INET, socket.SOCK_RAW,socket.IPPROTO_ICMP)
-# 		self.sniffer.bind((comp.ip,1))
-# 		self.sniffer.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-# 		self.sniffer.settimeout(1)
-# 		
-# 		self.udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# 	
-# 	def createICMP(self,msg):
-# 		echo = dpkt.icmp.ICMP.Echo()
-# 		echo.id = random.randint(0, 0xffff)
-# 		echo.seq = random.randint(0, 0xffff)
-# 		echo.data = msg
-# 
-# 		icmp = dpkt.icmp.ICMP()
-# 		icmp.type = dpkt.icmp.ICMP_ECHO
-# 		icmp.data = echo
-# 		return str(icmp)
-# 	
-# 	def ping(self,ip):
-# 		#print 'Ping',ip
-# 		try:
-# 			msg = self.createICMP('test')
-# 			self.udp.sendto(msg,(ip, 10))
-# 		except socket.error as e:
-# 			print e,'ip:',ip
-# 			
-# 		try:
-# 			self.sniffer.settimeout(0.01)
-# 			raw_buffer = self.sniffer.recvfrom(65565)[0]
-# 		except socket.timeout:
-# 			return ''
-# 		
-# 		return raw_buffer
-# 	
-# 	def scanNetwork(self,subnet):
-# 		"""
-# 		For our scanner, we are looking for a type value of 3 and a code value of 3, which 
-# 		are the Destination Unreachable class and Port Unreachable errors in ICMP messages.
-# 		"""
-# 		net = {}
-# 	
-# 		# continually read in packets and parse their information
-# 		for ip in netaddr.IPNetwork(subnet).iter_hosts():
-# 			raw_buffer = self.ping(str(ip))
-# 		
-# 			if not raw_buffer:
-# 				continue
-# 			
-# 			ip = dpkt.ip.IP(raw_buffer)
-# 			src = socket.inet_ntoa(ip.src)
-# 			# dst = socket.inet_ntoa(ip.dst)
-# 			icmp = ip.data
-# 		
-# 			# ICMP_UNREACH = 3
-# 			# ICMP_UNREACH_PORT = 3
-# 			# type 3 (unreachable) code 3 (destination port)
-# 			# type 5 (redirect) code 1 (host) - router does this
-# 			if icmp.type == dpkt.icmp.ICMP_UNREACH and icmp.code == dpkt.icmp.ICMP_UNREACH_PORT:
-# 				net[src] = 'up'
-# 		
-# 		return net
-
-
-
-# class PortScanner(object):
-# 	"""
-# 	Scans a single host and finds all open ports with in its range (1 ... n).
-# 	"""
-# 	def __init__(self,ports=range(1,1024)):
-# 		self.ports = ports
-# 		
-# # 	def getBanner(self,ip,port):
-# # 		return ''
-# 		
-# 	def openPort(self,ip,port):
-# 		try:			
-# 			self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# 			socket.setdefaulttimeout(0.01)
-# 			self.sock.connect((ip, port))
-# 			return True
-# 		except KeyboardInterrupt:
-# 			print "You pressed Ctrl+C, killing PortScanner"
-# 			exit()	
-# 		except:
-# 			self.sock.close()
-# 			return False
-# 			
-# 	def scan(self,ip):
-# 		tcp = []
-# 		
-# 		for port in self.ports: 
-# 			good = self.openPort(ip,port)
-# 			if good:
-# 				svc = ''
-# 				try:
-# 					svc = socket.getservbyport(port).strip()
-# 				except:
-# 					svc = 'unknown'
-# 				tcp.append( (port,svc) )
-# #			if banner and good:
-# #				ports[str(port)+'_banner'] = self.getBanner(ip,port)
-# 		
-# 		self.sock.close()
-# 		return tcp
-
-# class ActiveMapper(object):
-# 	"""
-# 	Actively scans a network (arp-scan) and then pings each host for open ports.
-# 	"""
-# 	def __init__(self,ports=range(1,1024)):
-# 		self.ps = PortScanner(ports)
-# 		self.asn = ArpScan()
-# 		
-# 	def wol(self, mac):
-# 		"""
-# 		Wake-on-lan (wol)
-# 		in: hw addr
-# 		out: None
-# 		"""
-# 		wol.send_magic_packet(mac)
-# 			
-# 	def scan(self,dev):
-# 		"""
-# 		arpscan - {'type':'arp', 'mac': b[1],'ipv4': b[0]}
-# 		portscan - [ (svc,port) ]
-# 		activescan - {'type': 'portscan', 'ipv4': ip, 'ports': [portscan]}
-# 		"""
-# 		arp = self.asn.scan(dev)
-# 		
-# 		ports = []
-# 		for host in arp:
-# 			#print host
-# 			p = self.ps.scan( host['ipv4'] )
-# 			if p: ports.append( {'type': 'portscan', 'ipv4': host['ipv4'], 'ports':p} )
-# 			
-# 		for i in arp:
-# 			ports.append(i)
-# 			
-# 		return ports
-
-
 ########################################################
 		
 def main():
@@ -620,8 +384,6 @@ def main():
 	
 	map = []
 	p = PacketDecoder()
-
-	if mode == 'off-line':
 		# capture first
 		???
 		
@@ -632,34 +394,34 @@ def main():
 	
 # 		return map
 
-	else:
-# 	def live(self,dev,loop=500):
-		"""
-		open device
-		# Arguments here are:
-		#	device
-		#	snaplen (maximum number of bytes to capture _per_packet_)
-		#	promiscious mode (1 for true), need False for OSX
-		#	timeout (in milliseconds)
-		"""	
-		# real-time
-		cap = pcapy.open_live(dev , 2048 ,False, 50)
-		#cap.setfilter('udp')
-	
-		#start sniffing packets
-		while(loop):
-			try:
-				loop -= 1 
-				(header, data) = cap.next()
-			except KeyboardInterrupt:
-				print 'You hit ^C, exiting PassiveMapper ... bye'
-				exit()
-			except:
-				continue
-		
-			self.process(header,data)
-	
-		return self.map
+# 	else:
+# # 	def live(self,dev,loop=500):
+# 		"""
+# 		open device
+# 		# Arguments here are:
+# 		#	device
+# 		#	snaplen (maximum number of bytes to capture _per_packet_)
+# 		#	promiscious mode (1 for true), need False for OSX
+# 		#	timeout (in milliseconds)
+# 		"""	
+# 		# real-time
+# 		cap = pcapy.open_live(dev , 2048 ,False, 50)
+# 		#cap.setfilter('udp')
+# 	
+# 		#start sniffing packets
+# 		while(loop):
+# 			try:
+# 				loop -= 1 
+# 				(header, data) = cap.next()
+# 			except KeyboardInterrupt:
+# 				print 'You hit ^C, exiting PassiveMapper ... bye'
+# 				exit()
+# 			except:
+# 				continue
+# 		
+# 			self.process(header,data)
+# 	
+# 		return self.map
 		
  
 if __name__ == "__main__":
