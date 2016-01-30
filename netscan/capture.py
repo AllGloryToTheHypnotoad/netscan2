@@ -35,7 +35,6 @@ def handleArgs():
 	description = """
 	Grabs packets from an interface (default: en1) and writes them to a file
 	(default: network.pcap).
-
 	example:
 
 		capture -s filename -i iface -f 'tcp'

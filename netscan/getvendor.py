@@ -4,14 +4,15 @@ import sys			# get platform (linux or linux2 or darwin)
 import argparse     # handle command line
 import requests		# mac api
 import json         # save data
+import pprint as pp # printing
 
 class MacLookup(object):
-	def __init__(self,mac):
-		self.vendor = self.get(mac)
+	def __init__(self,mac, full=False):
+		self.vendor = self.get(mac,full)
 
-	def get(self,mac):
+	def get(self,mac,full):
 		"""
-		json responce from www.macvendorlookup.com:
+		json response from www.macvendorlookup.com:
 
 		{u'addressL1': u'1 Infinite Loop',
 		u'addressL2': u'',
@@ -36,10 +37,12 @@ class MacLookup(object):
 		elif r.headers['content-type'] != 'application/json':
 			print 'ERROR: Wrong content type:', r.headers['content-type']
 			return {'company':'unknown'}
+
 		a={}
 
 		try:
-			a['company'] = r.json()[0]['company']
+			if full: a = r.json()[0]
+			else: a['company'] = r.json()[0]['company']
 			#print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
 		except:
 			print 'ERROR:',r.status_code,r.headers,r.ok,r.text,r.reason
@@ -48,29 +51,25 @@ class MacLookup(object):
 		return a
 
 def handleArgs():
-	description = """
-
+	description = """Determines host vendor given the MAC address.
 	example:
-
+		getvendor 11:22:33:44:55:66 --full
 		getvendor 11:22:33:44:55:66
 	"""
 	parser = argparse.ArgumentParser(description)
 	parser.add_argument('mac', help='mac address of host') # mandatory arg
+	parser.add_argument('-f', '--full', help='return full json output for vendor', action='store_true', default=False)
 	args = parser.parse_args()
 	return args
 
 def main():
 	# handle inputs
 	args = handleArgs()
-	vendor = 'unknown'
-
-	# check for sudo/root privileges ??
-	# if os.geteuid() != 0:
-	# 	exit('You need to be root/sudo ... exiting')
+	vendor = {}
 
 	try:
-		vendor = MacLookup(args.mac).vendor
-		print vendor
+		vendor = MacLookup(args.mac,args.full).vendor
+		pp.pprint( vendor )
 		return vendor
 	except KeyboardInterrupt:
 		exit('You hit ^C, exiting PassiveMapper ... bye')

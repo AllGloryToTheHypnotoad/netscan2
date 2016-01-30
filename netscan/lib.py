@@ -11,7 +11,7 @@
 # import requests		# mac api
 # import socket		# ordering
 # import sys			# get platform (linux or linux2)
-# import subprocess	# use commandline
+import subprocess	# use commandline
 # import random		# Pinger uses it when creating ICMP packets
 # from awake import wol # wake on lan
 
@@ -34,6 +34,14 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 
 """
 
+class Commands(object):
+	"""
+	Unfortunately the extremely simple/useful commands was depreciated in favor
+	of the complex/confusing subprocess ... this aims to simplify.
+	"""
+	def getoutput(self,cmd):
+		ans = subprocess.Popen([cmd], stdout = subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+		return ans
 
 #######################
 # class DNS(object):
@@ -49,36 +57,36 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 # 			msg={'type':'arp', 'mac': self.add_colons_to_mac( binascii.hexlify(arp.sha) ),'ipv4':socket.inet_ntoa(arp.spa)}
 # 			return msg
 # 		else: return {}
-# 
+#
 # class mDNS(object):
 # 	def __init__(self,udp):
-# 		msg = {}					
+# 		msg = {}
 # 		try:
-# 			mdns = dpkt.dns.DNS(udp.data)	 
-# 		except dpkt.Error:	
-# 			#print 'dpkt.Error' 
+# 			mdns = dpkt.dns.DNS(udp.data)
+# 		except dpkt.Error:
+# 			#print 'dpkt.Error'
 # 			return msg
 # 		except (IndexError, TypeError):
 # 			# dpkt shouldn't do this, but it does in some cases
 # 			#print 'other error'
 # 			return msg
-# 
+#
 # 		if mdns.qr != dpkt.dns.DNS_R: return msg
 # 		if mdns.opcode != dpkt.dns.DNS_QUERY: return msg
 # 		if mdns.rcode != dpkt.dns.DNS_RCODE_NOERR: return msg
-# 	
+#
 # 		msg['type'] = 'mdns'
 # 		ans = []
-# 
+#
 # 		for rr in mdns.an:
 # 			h = self.getRecord(rr)
-# 		
+#
 # 			# check if empty
 # 			if h: ans.append( h )
-# 		
+#
 # 		msg['rr'] = ans
 # 		return msg
-# 
+#
 # 	def getRecord(self,rr):
 # 		"""
 # 		The response records (rr) in a dns packet all refer to the same host
@@ -87,18 +95,18 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 # 		elif rr.type == 28: return {'type': 'aaaa', 'ipv6': socket.inet_ntop(socket.AF_INET6, rr.rdata), 'hostname': rr.name}
 # 		elif rr.type == 5:	return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
 # 		elif rr.type == 13: return {'type': 'hostinfo', 'hostname': rr.name, 'info': rr.rdata}
-# 		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]} 
-# 		elif rr.type == 12: return {'type': 'ptr'} 
-# 		elif rr.type == 16: return {'type': 'txt'}	
-# 		elif rr.type == 10: return {'type': 'wtf'}	
-# 
+# 		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]}
+# 		elif rr.type == 12: return {'type': 'ptr'}
+# 		elif rr.type == 16: return {'type': 'txt'}
+# 		elif rr.type == 10: return {'type': 'wtf'}
+#
 # class PacketDecoder(object):
 # 	"""
 # 	PacketDecoder reads dpkt packets and produces a dict with useful information in network
 # 	recon. Not everything is currently used.
 # 	eth:hw addr src,dst
 # 	 - ipv4: ip addr src,dst
-# 	   -- tcp: port src, dst; sequence num; 
+# 	   -- tcp: port src, dst; sequence num;
 # 	   -- udp: port src, dst;
 # 		 -- dns: opcode; rcode;
 # 		   -- RR:
@@ -120,41 +128,41 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 # 		s = list()
 # 		for i in range(12/2) :	# mac_addr should always be 12 chars, we work in groups of 2 chars
 # 			s.append( mac_addr[i*2:i*2+2] )
-# 		r = ":".join(s)		
+# 		r = ":".join(s)
 # 		return r
-# 		
+#
 # 	def decode(self,eth):
 # 		"""
-# 		decode an ethernet packet. The dict returned indicates the type (arp,mdns,etc) 
+# 		decode an ethernet packet. The dict returned indicates the type (arp,mdns,etc)
 # 		which will indicate how to read/use the dict.
-# 		
+#
 # 		in: ethernet pkt
 # 		out: dict
 # 		"""
 # 		if eth.type == dpkt.ethernet.ETH_TYPE_ARP:
 # 			return ARP(eth.data)
-# 			
+#
 # 		#elif eth.type == dpkt.ethernet.ETH_TYPE_IP6:
-# 		elif eth.type == dpkt.ethernet.ETH_TYPE_IP:			
+# 		elif eth.type == dpkt.ethernet.ETH_TYPE_IP:
 # 			ip = eth.data
 # 			if ip.p == dpkt.ip.IP_PROTO_UDP:
 # 				udp = ip.data
-# 				
+#
 # 				# these aren't useful
 # #				if udp.dport == 53: #DNS
 # #					return DNS(udp.data)
-# 						
+#
 # 				if udp.dport == 5353: # mDNS
 # 					return mDNS(udp.data)
 # 				else: return {}
 # 			else: return {}
 
 #########################
-# 
+#
 # def macLookup(mac):
 # 	"""
 # 	json responce from www.macvendorlookup.com:
-# 	
+#
 # 	{u'addressL1': u'1 Infinite Loop',
 # 	u'addressL2': u'',
 # 	u'addressL3': u'Cupertino CA 95014',
@@ -171,7 +179,7 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 # 	except requests.exceptions.HTTPError as e:
 # 		print "HTTPError:", e.message
 # 		return {'company':'unknown'}
-# 	
+#
 # 	if r.status_code == 204: # no content found, bad MAC addr
 # 		print 'ERROR: Bad MAC addr:',mac
 # 		return {'company':'unknown'}
@@ -179,16 +187,16 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 # 		print 'ERROR: Wrong content type:', r.headers['content-type']
 # 		return {'company':'unknown'}
 # 	a={}
-# 	
+#
 # 	try:
 # 		a = r.json()[0]
 # 		#print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
 # 	except:
 # 		print 'ERROR:',r.status_code,r.headers,r.ok,r.text,r.reason
 # 		a = {'company':'unknown'}
-# 	
+#
 # 	return a
-	
+
 
 
 
@@ -201,12 +209,12 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 # 	"""
 # 	ip = 'x'
 # 	mac = 'x'
-# 
+#
 # 	def __init__(self):
 # 		"""Everything is done in init(), don't call any methods, just access ip or mac."""
 # 		self.mac = self.getHostMAC()
 # 		self.ip = self.getHostIP()
-# 
+#
 # 	def getHostIP(self):
 # 		"""
 # 		Need to get the localhost IP address
@@ -217,10 +225,10 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 # 		if '.local' not in host_name: host_name = host_name + '.local'
 # 		ip = socket.gethostbyname(host_name)
 # 		return ip
-# 
+#
 # 	def getHostMAC(self,dev='en1'):
 # 		"""
-# 		Major flaw of NMAP doesn't allow you to get the localhost's MAC address, so this 
+# 		Major flaw of NMAP doesn't allow you to get the localhost's MAC address, so this
 # 		is a work around.
 # 		in: none
 # 		out: string of hex for MAC address 'aa:bb:11:22..' or empty string if error
@@ -228,19 +236,19 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 # 		# this doesn't work, could return any network address (en0, en1, bluetooth, etc)
 # 		#return ':'.join(re.findall('..', '%012x' % uuid.getnode()))
 # 		mac = commands.getoutput("ifconfig " + dev + "| grep ether | awk '{ print $2 }'")
-# 		
+#
 # 		# double check it is a valid mac address
 # 		if len(mac) == 17 and len(mac.split(':')) == 6: return mac
-# 		
+#
 # 		# nothing found
 # 		return ''
 
 ########################################################
-		
+
 # def main():
-# 	
+#
 # 	print('Hello and goodbye!')
-# 		
-#  
+#
+#
 # if __name__ == "__main__":
 # 	main()
