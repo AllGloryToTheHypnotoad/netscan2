@@ -72,15 +72,15 @@ class mDNS(object):
 		try:
 			mdns = dpkt.dns.DNS(udp.data)
 		except dpkt.Error:
-			print 'mDNS dpkt.Error'
+			# print 'mDNS dpkt.Error'
 			return
 		except (IndexError, TypeError):
 			# dpkt shouldn't do this, but it does in some cases
-			print 'mDNS other error'
+			# print 'mDNS other error'
 			return
 		except:
-			print 'mDNS crap: ',sys.exc_info()
-			print udp
+			# print 'mDNS crap: ',sys.exc_info()
+			# print udp
 			return
 
 		if mdns.qr != dpkt.dns.DNS_R: return
@@ -165,17 +165,17 @@ class PacketDecoder(object):
 				if udp.dport == 5353:
 					# print udp
 					ans = mDNS(udp).get()
-					print 25*'='
-					pp.pprint(ans)
-					print 25*'='
+					# print 25*'='
+					# pp.pprint(ans)
+					# print 25*'='
 					return ans
 
-				print 'IPv6 UDP','port:',udp.dport,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
+				# print 'IPv6 UDP','port:',udp.dport,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
 
 			# TCP not useful
 			elif ip.p == dpkt.ip.IP_PROTO_TCP:
 				tcp = ip.data
-				print 'IPv6 TCP','port:',tcp.dport,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
+				# print 'IPv6 TCP','port:',tcp.dport,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
 
 			# ICMP error msg not useful for mapping
 			elif ip.p == dpkt.ip.IP_PROTO_ICMP6:
@@ -184,7 +184,8 @@ class PacketDecoder(object):
 
 			# other stuff I haven't decoded
 			else:
-				print 'IPv6',ip.p,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
+				0
+				# print 'IPv6',ip.p,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
 		elif eth.type == dpkt.ethernet.ETH_TYPE_IP:
 			ip = eth.data
 
@@ -206,22 +207,22 @@ class PacketDecoder(object):
 				else:
 					# don't print standard ports
 					# 17500 dropbox
-					if not ip.data.dport in [17500]:
-						print 'other udp','port:',udp.dport,'src:',self.getip(ip.src),'dst:',self.getip(ip.dst),':  '
+					# if not ip.data.dport in [17500]:
+					# 	print 'other udp','port:',udp.dport,'src:',self.getip(ip.src),'dst:',self.getip(ip.dst),':  '
 					return {}
 			elif ip.p == dpkt.ip.IP_PROTO_TCP:
-				src = self.getip(ip.src)
-				if netaddr.IPAddress(src) not in netaddr.IPNetwork("192.168.1.0/24"):
-					who = ''
-					if src not in self.ipMap:
-						who = WhoIs(src).record['NetName']
-						self.ipMap[src] = who
-					else:
-						who = self.ipMap[src]
-					if who in ['GOOGLE','AKAMAI','APPLE-WWNET','AMAZO-ZIAD1','DROPBOX']:
-						return {}
-					else:
-						print src,who
+				# src = self.getip(ip.src)
+				# if netaddr.IPAddress(src) not in netaddr.IPNetwork("192.168.1.0/24"):
+				# 	who = ''
+				# 	if src not in self.ipMap:
+				# 		who = WhoIs(src).record['NetName']
+				# 		self.ipMap[src] = who
+				# 	else:
+				# 		who = self.ipMap[src]
+				# 	if who in ['GOOGLE','AKAMAI','APPLE-WWNET','AMAZO-ZIAD1','DROPBOX']:
+				# 		return {}
+				# 	else:
+				# 		print src,who
 				# don't print standard ports
 				# port 58969 - XSANS Apple, why do i see that?
 				# 22 ssh
@@ -235,16 +236,16 @@ class PacketDecoder(object):
 				# 5009 airport admin utility
 				# 5222 ichat
 				# 17500 dropbox
-				if not ip.data.dport in [22,25,80,123,143,443,445,548,5009,5222,17500]:
-					print 'other tcp','port:',ip.data.dport,'src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
+				# if not ip.data.dport in [22,25,80,123,143,443,445,548,5009,5222,17500]:
+					# print 'other tcp','port:',ip.data.dport,'src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
 				return {}
 			# elif ip.p == dpkt.ip.IP_PROTO_ICMP6:
 			# 	print '?????? other icmp6','src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
 			elif ip.p == 2:
 				0
-				print 'IGMP',ip.p,'src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
+				# print 'IGMP','src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
 			else:
-				print 'other ip packet','src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
+				# print 'other ip packet','src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
 				return {}
 
 ####################################################
@@ -333,7 +334,8 @@ class PassiveMapper(object):
 
 	def find(self,a,list):
 		"""
-		this is not very good
+		find a record for the same host and merges the info. If the host can't
+		be found, then it adds a new record for the host.
 		"""
 		for i in list:
 			if 'ipv4' in i and 'ipv4' in a:
@@ -358,20 +360,6 @@ class PassiveMapper(object):
 		ans = []
 		for host in map:
 			self.find(host,ans)
-			# for i in list:
-			# 	if 'ipv4' in i and 'ipv4' in host:
-			# 		if i['ipv4'] == host['ipv4']:
-			# 			i.update(host)
-			# 			continue
-			# 	elif 'ipv6' in i and 'ipv6' in host:
-			# 		if i['ipv6'] == host['ipv6']:
-			# 			i.update(host)
-			# 			continue
-			# 	elif 'hostname' in i and 'hostname' in host:
-			# 		if i['hostname'] == host['hostname']:
-			# 			i.update(host)
-			# 			continue
-			# list.append(host)
 		return ans
 
 	def live(self,dev,loop=500):
