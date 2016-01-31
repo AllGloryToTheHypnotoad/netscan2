@@ -3,19 +3,13 @@
 from pscan import PassiveMapper
 from getvendor import MacLookup
 from ipwhois import WhoIs
+from gethostname import GetHostName
 
-# from nose.tools import assert_equal as eq_
-# from nose.tools import assert_not_equal as neq_
-# from nose.tools import assert_raises as raise_
-# from nose.tools import raises
+# execute with:
+#       nosetests -v tests.py
 
-# def test_pass():
-# 	"""Try to pass"""
-# 	eq_(1,1)
-#
-# def test_fail():
-# 	"""Try to fail"""
-# 	eq_('bob','bob')
+def test_hostname():
+	assert 'AirportExtreme.local' == GetHostName('192.168.1.1').name
 
 def test_vendor():
 	ans = {u'addressL1': u'1 Infinite Loop',
@@ -31,7 +25,6 @@ def test_vendor():
 
 	vendor = MacLookup('c8:2a:14:1f:18:69',True).vendor
 	assert ans == vendor
-
 
 def test_passive_scan():
 	ans =  {'hostname': 'calculon.local',
@@ -69,24 +62,3 @@ def test_whois():
 	who = WhoIs('184.84.180.122').record
 
 	assert ans == who
-
-# def test_mac():
-# 	"""Test mac lookup"""
-# 	ans = {'company':'unknown'}
-#
-# 	eq_(ans,nl.macLookup('1'))
-
-# this doesn't work inside travis ... can't get hostname i guess???
-# def test_ip():
-# 	"""Test getting host ip addr, for Travis.cl this is always 127.0.0.1"""
-# 	ip = nl.IP()
-# # 	eq_('127.0.0.1',ip.ip)
-# 	eq_(ip.ip,ip.ip,'Found: '+ip.ip)
-
-
-# def main():
-#
-#
-#
-# if __name__ == "__main__":
-# 	main()

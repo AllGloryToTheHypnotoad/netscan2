@@ -51,6 +51,7 @@ def main():
 
 	try:
 		hostname = GetHostName(args.ip).name
+		print hostname
 		return hostname
 	except KeyboardInterrupt:
 		exit('You hit ^C, exiting PassiveMapper ... bye')
