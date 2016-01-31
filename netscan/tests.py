@@ -34,16 +34,13 @@ def test_vendor():
 
 
 def test_passive_scan():
-	ans = {'hostname': 'Dalek.local',
-	'ipv4': '192.168.1.2',
-	'ipv6': 'fe80::ca2a:14ff:fe1f:1869',
-	'mac': 'c8:2a:14:1f:18:69',
-	'tcp': [{'port': 22, 'srv': '_ssh'},
-	      {'port': 22, 'srv': '_sftp-ssh'},
-	      {'port': 445, 'srv': '_smb'},
-	      {'port': 548, 'srv': '_afpovertcp'}],
-	'type': 'arp',
-	'udp': []}
+	ans =  {'hostname': 'calculon.local',
+  'ipv4': '192.168.1.8',
+  'ipv6': 'fe80::ba27:ebff:fe0a:5a17',
+  'mac': 'b8:27:eb:0a:5a:17',
+  'tcp': [{'port': 548, 'srv': '_afpovertcp'}],
+  'type': 'arp',
+  'udp': []}
 	map = []
 	pm = PassiveMapper()
 	map = pm.pcap('test.pcap')
@@ -53,7 +50,7 @@ def test_passive_scan():
 
 	for host in map:
 		if 'hostname' in host:
-			if host['hostname'] == 'Dalek.local':
+			if host['hostname'] == 'calculon.local':
 				assert ans == host
 
 def test_whois():
