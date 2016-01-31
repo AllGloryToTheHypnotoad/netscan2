@@ -165,9 +165,9 @@ class PacketDecoder(object):
 				if udp.dport == 5353:
 					# print udp
 					ans = mDNS(udp).get()
-					# print 25*'='
-					# pp.pprint(ans)
-					# print 25*'='
+					print 25*'='
+					pp.pprint(ans)
+					print 25*'='
 					return ans
 
 				print 'IPv6 UDP','port:',udp.dport,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
@@ -291,9 +291,11 @@ class PassiveMapper(object):
 			elif rtype == 'aaaa':
 				ans['ipv6'] = line['ipv6']
 				ans['hostname'] = line['hostname']
+				# ans['mac'] = line['mac']
 			elif rtype == 'a':
 				ans['ipv4'] = line['ipv4']
 				ans['hostname'] = line['hostname']
+				# ans['mac'] = line['mac']
 			else: print 'shit', line
 
 		if not ans['hostname'] and not ans['tcp']: ans = {}
@@ -312,8 +314,10 @@ class PassiveMapper(object):
 				# print 'rr: ',line['rr']
 				# print 'mdns'
 				a = self.rr(line)
-				a['type'] = 'rr'
-				if a: ans.append(a)
+
+				if a:
+					a['type'] = 'rr'
+					ans.append(a)
 			elif 'type' in line:
 				# print line['type']
 				rtype = line['type']
@@ -325,6 +329,49 @@ class PassiveMapper(object):
 				else: print '<<<<', line, '>>>>>>>'
 			else:
 				print '******',line,'*******'
+		return ans
+
+	def find(self,a,list):
+		"""
+		this is not very good
+		"""
+		for i in list:
+			if 'ipv4' in i and 'ipv4' in a:
+				if i['ipv4'] == a['ipv4']:
+					i.update(a)
+					return
+			elif 'ipv6' in i and 'ipv6' in a:
+				if i['ipv6'] == a['ipv6']:
+					i.update(a)
+					return
+			elif 'hostname' in i and 'hostname' in a:
+				if i['hostname'] == a['hostname']:
+					i.update(a)
+					return
+		list.append(a)
+		return
+
+	def combine(self,map):
+		"""
+		lots to do
+		"""
+		ans = []
+		for host in map:
+			self.find(host,ans)
+			# for i in list:
+			# 	if 'ipv4' in i and 'ipv4' in host:
+			# 		if i['ipv4'] == host['ipv4']:
+			# 			i.update(host)
+			# 			continue
+			# 	elif 'ipv6' in i and 'ipv6' in host:
+			# 		if i['ipv6'] == host['ipv6']:
+			# 			i.update(host)
+			# 			continue
+			# 	elif 'hostname' in i and 'hostname' in host:
+			# 		if i['hostname'] == host['hostname']:
+			# 			i.update(host)
+			# 			continue
+			# list.append(host)
 		return ans
 
 	def live(self,dev,loop=500):
@@ -369,6 +416,8 @@ def main():
 	pm = PassiveMapper()
 	map = pm.pcap('test.pcap')
 	map = pm.filter(map)
+	map = pm.combine(map)
+	map = pm.combine(map)
 	pp.pprint( map )
 
 	return map
