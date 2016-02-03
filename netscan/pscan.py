@@ -399,7 +399,21 @@ class PassiveMapper(object):
 
 ########################################################
 
+
+def handleArgs():
+	description = """The passive mapper primarily listens and records mDNS
+	traffic.
+	Example:
+		pscan --file network.pcap --save network.json
+
+	"""
+	parser = argparse.ArgumentParser(description)
+	args = parser.parse_args()
+	return args
+
 def main():
+	args = handleArgs()
+
 	map = []
 	pm = PassiveMapper()
 	map = pm.pcap('test.pcap')

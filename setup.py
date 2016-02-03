@@ -44,24 +44,29 @@ setup(
         #'Programming Language :: Python :: 3.2',
         #'Programming Language :: Python :: 3.3',
         #'Programming Language :: Python :: 3.4',
-        
+
         # Operating systems this runs on
         'Operating System :: Unix',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX',
-        
+
         # what does this do?
         'Topic :: Utilities',
         'Topic :: System :: Shells',
         'Environment :: Console'
     ],
-	
+
     packages=['netscan'],
-    install_requires=['awake','requests','pcapy','dpkt','netaddr'],
+    install_requires=['requests','pcapy','dpkt','netaddr'],
     entry_points={
         'console_scripts': [
             'netscan=netscan.netscan:main',
-            'html5=netscan.html5:main',
+            'capture=netscan.capture:main',
+            'pscan=netscan.pscan:main',
+            'ascan=netscan.ascan:main',
+            'getvendor=netsan.getvendor:main',
+            'gethostname=netscan.gethostname:main',
+            'ipwhois=netscan.ipwhois:main'
         ],
     },
 )
