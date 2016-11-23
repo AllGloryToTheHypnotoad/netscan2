@@ -2,8 +2,6 @@
 
 import sys           # get platform (linux or linux2 or darwin)
 import argparse      # handle command line
-# import requests      # mac api
-# import json          # save data
 import pprint as pp  # printing
 from netscan.lib import MacLookup
 

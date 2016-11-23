@@ -3,11 +3,13 @@ import os
 from netscan import __version__ as VERSION
 from setuptools.command.test import test as TestCommand
 
+
 class PublishCommand(TestCommand):
 	def run_tests(self):
 		print('Publishing to PyPi ...')
 		os.system("python setup.py bdist_wheel")
-		os.system("twine upload dist/netscan2-{}*.whl".format(VERSION))
+		os.system("twine upload dist/netscan-{}*.whl".format(VERSION))
+
 
 setup(
 	name='netscan',
@@ -45,10 +47,6 @@ setup(
 		# Specify the Python versions you support here. In particular, ensure
 		# that you indicate whether you support Python 2, Python 3 or both.
 		'Programming Language :: Python :: 2.7',
-		#'Programming Language :: Python :: 3',
-		#'Programming Language :: Python :: 3.2',
-		#'Programming Language :: Python :: 3.3',
-		#'Programming Language :: Python :: 3.4',
 
 		# Operating systems this runs on
 		'Operating System :: Unix',
@@ -67,16 +65,23 @@ setup(
 		# 'clean': CleanCommand
 	},
 	packages=['netscan'],
-	install_requires=['requests','pcapy','dpkt','netaddr'],
-	entry_points={
-		'console_scripts': [
-			'netscan=netscan.netscan:main',
-			'capture=netscan.capture:main',
-			'pscan=netscan.pscan:main',
-			'ascan=netscan.ascan:main',
-			'getvendor=netsan.getvendor:main',
-			'gethostname=netscan.gethostname:main',
-			'ipwhois=netscan.ipwhois:main'
-		],
-	},
+	install_requires=['requests', 'pcapy', 'dpkt', 'netaddr'],
+	scripts=[
+		'bin/ascan.py',
+		'bin/pscan.py',
+		'bin/gethostname.py',
+		'bin/getvendor.py',
+		'bin/ipwhois'
+	]
+	# entry_points={
+	# 	'console_scripts': [
+	# 		'netscan=netscan.netscan:main',
+	# 		'capture=netscan.capture:main',
+	# 		'pscan=netscan.pscan:main',
+	# 		'ascan=netscan.ascan:main',
+	# 		'getvendor=netsan.getvendor:main',
+	# 		'gethostname=netscan.gethostname:main',
+	# 		'ipwhois=netscan.ipwhois:main'
+	# 	],
+	# },
 )

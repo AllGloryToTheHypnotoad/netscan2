@@ -5,7 +5,6 @@ __version__ = '2.1.4'
 #           "WebPage",
 #           "YamlDoc",
 #           "IP"]
-# from netscan import ascan
-# from ascan import ArpScan
-import ascan
-import pscan
+
+import ActiveScan
+import PassiveScan
