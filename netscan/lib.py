@@ -1,19 +1,12 @@
 #!/usr/bin/env python
 
-# import datetime		# time stamp
-# import pcapy		# passive mapping
-# import os			# check sudo
-# import dpkt			# parse packets
-# import binascii		# get MAC addr on ARP messages
-# import netaddr		# ipv4/6 addresses, address space: 192.168.5.0/24
-# # import pprint as pp # display info
-# import commands		# arp-scan
-# import requests		# mac api
-# import socket		# ordering
-# import sys			# get platform (linux or linux2)
-import subprocess	# use commandline
-# import random		# Pinger uses it when creating ICMP packets
-# from awake import wol # wake on lan
+import pcapy
+# import os
+import sys
+import subprocess  # use commandline
+# from requests import get  # whois
+import requests
+import re
 
 """
 [kevin@Tardis test]$ ./pmap5.py -p test2.pcap -d
@@ -34,221 +27,135 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 
 """
 
+
 class Commands(object):
 	"""
 	Unfortunately the extremely simple/useful commands was depreciated in favor
 	of the complex/confusing subprocess ... this aims to simplify.
 	"""
-	def getoutput(self,cmd):
-		ans = subprocess.Popen([cmd], stdout = subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+	def getoutput(self, cmd):
+		ans = subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 		return ans
 
-#######################
-# class DNS(object):
-# 	def __init(self,udp)__:
-# 		dns = dpkt.dns.DNS(udp.data)
-# 		for rr in dns.an:
-# 			h = self.getRecord(rr)
-# 			print h
 
-# class ARP(object):
-# 	def __init__(self, arp):
-# 		if arp.op == dpkt.arp.ARP_OP_REPLY:
-# 			msg={'type':'arp', 'mac': self.add_colons_to_mac( binascii.hexlify(arp.sha) ),'ipv4':socket.inet_ntoa(arp.spa)}
-# 			return msg
-# 		else: return {}
-#
-# class mDNS(object):
-# 	def __init__(self,udp):
-# 		msg = {}
-# 		try:
-# 			mdns = dpkt.dns.DNS(udp.data)
-# 		except dpkt.Error:
-# 			#print 'dpkt.Error'
-# 			return msg
-# 		except (IndexError, TypeError):
-# 			# dpkt shouldn't do this, but it does in some cases
-# 			#print 'other error'
-# 			return msg
-#
-# 		if mdns.qr != dpkt.dns.DNS_R: return msg
-# 		if mdns.opcode != dpkt.dns.DNS_QUERY: return msg
-# 		if mdns.rcode != dpkt.dns.DNS_RCODE_NOERR: return msg
-#
-# 		msg['type'] = 'mdns'
-# 		ans = []
-#
-# 		for rr in mdns.an:
-# 			h = self.getRecord(rr)
-#
-# 			# check if empty
-# 			if h: ans.append( h )
-#
-# 		msg['rr'] = ans
-# 		return msg
-#
-# 	def getRecord(self,rr):
-# 		"""
-# 		The response records (rr) in a dns packet all refer to the same host
-# 		"""
-# 		if	 rr.type == 1:	return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata),'hostname': rr.name}
-# 		elif rr.type == 28: return {'type': 'aaaa', 'ipv6': socket.inet_ntop(socket.AF_INET6, rr.rdata), 'hostname': rr.name}
-# 		elif rr.type == 5:	return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
-# 		elif rr.type == 13: return {'type': 'hostinfo', 'hostname': rr.name, 'info': rr.rdata}
-# 		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]}
-# 		elif rr.type == 12: return {'type': 'ptr'}
-# 		elif rr.type == 16: return {'type': 'txt'}
-# 		elif rr.type == 10: return {'type': 'wtf'}
-#
-# class PacketDecoder(object):
-# 	"""
-# 	PacketDecoder reads dpkt packets and produces a dict with useful information in network
-# 	recon. Not everything is currently used.
-# 	eth:hw addr src,dst
-# 	 - ipv4: ip addr src,dst
-# 	   -- tcp: port src, dst; sequence num;
-# 	   -- udp: port src, dst;
-# 		 -- dns: opcode; rcode;
-# 		   -- RR:
-# 			 -- txt: ?
-# 			 -- a: ipv4; hostname
-# 			 -- aaaa: ipv6; hostname
-# 			 -- ptr: ?
-# 			 -- cname: ?
-# 			 -- srv: hostname; service; protocol; port
-# 		   -- Q:
-# 	 - ipv6: ip addr src,dst; nxt
-# 	   -- icnmpv6:
-# 	"""
-# 	def add_colons_to_mac(self, mac_addr) :
-# 		"""
-# 		This function accepts a 12 hex digit string and converts it to a colon
-# 		separated string
-# 		"""
-# 		s = list()
-# 		for i in range(12/2) :	# mac_addr should always be 12 chars, we work in groups of 2 chars
-# 			s.append( mac_addr[i*2:i*2+2] )
-# 		r = ":".join(s)
-# 		return r
-#
-# 	def decode(self,eth):
-# 		"""
-# 		decode an ethernet packet. The dict returned indicates the type (arp,mdns,etc)
-# 		which will indicate how to read/use the dict.
-#
-# 		in: ethernet pkt
-# 		out: dict
-# 		"""
-# 		if eth.type == dpkt.ethernet.ETH_TYPE_ARP:
-# 			return ARP(eth.data)
-#
-# 		#elif eth.type == dpkt.ethernet.ETH_TYPE_IP6:
-# 		elif eth.type == dpkt.ethernet.ETH_TYPE_IP:
-# 			ip = eth.data
-# 			if ip.p == dpkt.ip.IP_PROTO_UDP:
-# 				udp = ip.data
-#
-# 				# these aren't useful
-# #				if udp.dport == 53: #DNS
-# #					return DNS(udp.data)
-#
-# 				if udp.dport == 5353: # mDNS
-# 					return mDNS(udp.data)
-# 				else: return {}
-# 			else: return {}
-
-#########################
-#
-# def macLookup(mac):
-# 	"""
-# 	json responce from www.macvendorlookup.com:
-#
-# 	{u'addressL1': u'1 Infinite Loop',
-# 	u'addressL2': u'',
-# 	u'addressL3': u'Cupertino CA 95014',
-# 	u'company': u'Apple',
-# 	u'country': u'UNITED STATES',
-# 	u'endDec': u'202412195315711',
-# 	u'endHex': u'B817C2FFFFFF',
-# 	u'startDec': u'202412178538496',
-# 	u'startHex': u'B817C2000000',
-# 	u'type': u'MA-L'}
-# 	"""
-# 	try:
-# 		r = requests.get('http://www.macvendorlookup.com/api/v2/' + mac)
-# 	except requests.exceptions.HTTPError as e:
-# 		print "HTTPError:", e.message
-# 		return {'company':'unknown'}
-#
-# 	if r.status_code == 204: # no content found, bad MAC addr
-# 		print 'ERROR: Bad MAC addr:',mac
-# 		return {'company':'unknown'}
-# 	elif r.headers['content-type'] != 'application/json':
-# 		print 'ERROR: Wrong content type:', r.headers['content-type']
-# 		return {'company':'unknown'}
-# 	a={}
-#
-# 	try:
-# 		a = r.json()[0]
-# 		#print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
-# 	except:
-# 		print 'ERROR:',r.status_code,r.headers,r.ok,r.text,r.reason
-# 		a = {'company':'unknown'}
-#
-# 	return a
+class WhoIs(object):
+	def __init__(self, ip):
+		rec = requests.get('http://whois.arin.net/rest/ip/{}.txt'.format(ip))
+		if rec.status_code != 200:
+			print 'Error'
+			return {}
+		ans = {}
+		r = re.compile(r"\s\s+")
+		b = rec.text.split('\n')
+		for l in b:
+			if l and l[0] != '#':
+				l = r.sub('', l)
+				a = l.split(':')
+				# print a
+				ans[a[0]] = a[1]
+		self.record = ans
 
 
+class GetHostName(object):
+	def __init__(self, ip):
+		"""Use the avahi (zeroconfig) tools or dig to find a host name given an
+		ip address.
+
+		in: ip
+		out: string w/ host name or 'unknown' if the host name couldn't be found
+		"""
+		name = 'unknown'
+		if sys.platform == 'linux' or sys.platform == 'linux2':
+			name = self.cmdLine("avahi-resolve-address {} | awk '{print $2}'".format(ip)).rstrip().rstrip('.')
+		elif sys.platform == 'darwin':
+			name = self.cmdLine('dig +short -x {} -p 5353 @224.0.0.251'.format(ip)).rstrip().rstrip('.')
+
+		if name.find('connection timed out') >= 0: name = 'unknown'
+		if name == '': name = 'unknown'
+
+		self.name = name
+
+	def cmdLine(self, cmd):
+		return subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 
 
+class CapturePackets(object):
+	"""
+	todo
+	"""
+	def __init__(self, iface, filename='test.pcap', filter=None, num_packets=3000):
+		# list all the network devices
+		# print pcapy.findalldevs()
 
-####################################################
+		max_bytes = 1024
+		promiscuous = False
+		read_timeout = 100  # in milliseconds
+		pc = pcapy.open_live(iface, max_bytes, promiscuous, read_timeout)
+		if filter: pc.setfilter(filter)
+		self.dumper = pc.dump_open(filename)
+		pc.loop(num_packets, self.recv_pkts)  # capture packets
 
-# class IP(object):
-# 	"""
-# 	Gets the IP and MAC addresses for the localhost
-# 	"""
-# 	ip = 'x'
-# 	mac = 'x'
-#
-# 	def __init__(self):
-# 		"""Everything is done in init(), don't call any methods, just access ip or mac."""
-# 		self.mac = self.getHostMAC()
-# 		self.ip = self.getHostIP()
-#
-# 	def getHostIP(self):
-# 		"""
-# 		Need to get the localhost IP address
-# 		in: none
-# 		out: returns the host machine's IP address
-# 		"""
-# 		host_name = socket.gethostname()
-# 		if '.local' not in host_name: host_name = host_name + '.local'
-# 		ip = socket.gethostbyname(host_name)
-# 		return ip
-#
-# 	def getHostMAC(self,dev='en1'):
-# 		"""
-# 		Major flaw of NMAP doesn't allow you to get the localhost's MAC address, so this
-# 		is a work around.
-# 		in: none
-# 		out: string of hex for MAC address 'aa:bb:11:22..' or empty string if error
-# 		"""
-# 		# this doesn't work, could return any network address (en0, en1, bluetooth, etc)
-# 		#return ':'.join(re.findall('..', '%012x' % uuid.getnode()))
-# 		mac = commands.getoutput("ifconfig " + dev + "| grep ether | awk '{ print $2 }'")
-#
-# 		# double check it is a valid mac address
-# 		if len(mac) == 17 and len(mac.split(':')) == 6: return mac
-#
-# 		# nothing found
-# 		return ''
+	# callback for received packets
+	def recv_pkts(self, hdr, data):
+		try:
+			# print data
+			self.dumper.dump(hdr, data)
+		except KeyboardInterrupt:  # probably show throw error instead
+			exit('keyboard exit')
+		except:
+			exit('crap ... something went wrong')
 
-########################################################
+	def run(self):
+		pass
+		# max_bytes = 1024
+		# promiscuous = False
+		# read_timeout = 100  # in milliseconds
+		# pc = pcapy.open_live(iface, max_bytes, promiscuous, read_timeout)
+		# if filter: pc.setfilter(filter)
+		# self.dumper = pc.dump_open(filename)
+		# pc.loop(num_packets, self.recv_pkts)  # capture packets
 
-# def main():
-#
-# 	print('Hello and goodbye!')
-#
-#
-# if __name__ == "__main__":
-# 	main()
+
+class MacLookup(object):
+	def __init__(self, mac, full=False):
+		self.vendor = self.get(mac, full)
+
+	def get(self, mac, full):
+		"""
+		json response from www.macvendorlookup.com:
+
+		{u'addressL1': u'1 Infinite Loop',
+		u'addressL2': u'',
+		u'addressL3': u'Cupertino CA 95014',
+		u'company': u'Apple',
+		u'country': u'UNITED STATES',
+		u'endDec': u'202412195315711',
+		u'endHex': u'B817C2FFFFFF',
+		u'startDec': u'202412178538496',
+		u'startHex': u'B817C2000000',
+		u'type': u'MA-L'}
+		"""
+		try:
+			r = requests.get('http://www.macvendorlookup.com/api/v2/' + mac)
+		except requests.exceptions.HTTPError as e:
+			print "HTTPError:", e.message
+			return {'company': 'unknown'}
+
+		if r.status_code == 204:  # no content found, bad MAC addr
+			print 'ERROR: Bad MAC addr:', mac
+			return {'company': 'unknown'}
+		elif r.headers['content-type'] != 'application/json':
+			print 'ERROR: Wrong content type:', r.headers['content-type']
+			return {'company': 'unknown'}
+
+		a = {}
+
+		try:
+			if full: a = r.json()[0]
+			else: a['company'] = r.json()[0]['company']
+			# print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
+		except:
+			print 'ERROR:', r.status_code, r.headers, r.ok, r.text, r.reason
+			a = {'company': 'unknown'}
+
+		return a

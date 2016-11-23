@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 
-import datetime		# time stamp
-import pcapy		# passive mapping
-import os			# check sudo
-import dpkt			# parse packets
-import binascii		# get MAC addr on ARP messages
-import netaddr		# ipv4/6 addresses, address space: 192.168.5.0/24
-import pprint as pp # display info
-import commands		# arp-scan
-import requests		# mac api
-import socket		# ordering
-import sys			# get platform (linux or linux2)
-import subprocess	# use commandline
-import random		# Pinger uses it when creating ICMP packets
-from ipwhois import WhoIs
+# import datetime      # time stamp
+import pcapy         # passive mapping
+import os            # check sudo
+import dpkt          # parse packets
+import binascii      # get MAC addr on ARP messages
+# import netaddr       # ipv4/6 addresses, address space: 192.168.5.0/24
+# import pprint as pp  # display info
+# import commands      # arp-scan
+# import requests      # mac api
+import socket        # ordering
+# import sys           # get platform (linux or linux2)
+# import subprocess    # use commandline
+# import random        # Pinger uses it when creating ICMP packets
+# from lib import WhoIs
 # from awake import wol # wake on lan
 
 """
@@ -48,26 +48,31 @@ class ARP(object):
 	def __init__(self, arp):
 		self.msg = {}
 		if arp.op == dpkt.arp.ARP_OP_REPLY:
-			self.msg={'type':'arp', 'mac': self.add_colons_to_mac( binascii.hexlify(arp.sha) ),'ipv4':socket.inet_ntoa(arp.spa)}
-			return
-		else: return
+			self.msg = {
+				'type': 'arp',
+				'mac': self.add_colons_to_mac(binascii.hexlify(arp.sha)),
+				'ipv4': socket.inet_ntoa(arp.spa)
+			}
+
+		return
 
 	def get(self):
 		return self.msg
 
-	def add_colons_to_mac(self, mac_addr) :
+	def add_colons_to_mac(self, mac_addr):
 		"""
 		This function accepts a 12 hex digit string and converts it to a colon
 		separated string
 		"""
 		s = list()
-		for i in range(12/2) :	# mac_addr should always be 12 chars, we work in groups of 2 chars
-			s.append( mac_addr[i*2:i*2+2] )
+		for i in range(12/2):  # mac_addr should always be 12 chars, we work in groups of 2 chars
+			s.append(mac_addr[i*2:i*2+2])
 		r = ":".join(s)
 		return r
 
+
 class mDNS(object):
-	def __init__(self,udp):
+	def __init__(self, udp):
 		self.msg = {}
 		try:
 			mdns = dpkt.dns.DNS(udp.data)
@@ -94,18 +99,18 @@ class mDNS(object):
 			h = self.getRecord(rr)
 
 			# check if empty
-			if h: ans.append( h )
+			if h: ans.append(h)
 
 		self.msg['rr'] = ans
 		return
 
-	def getRecord(self,rr):
+	def getRecord(self, rr):
 		"""
 		The response records (rr) in a dns packet all refer to the same host
 		"""
-		if	 rr.type == 1:	return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata),'hostname': rr.name}
+		if rr.type == 1: return {'type': 'a', 'ipv4': socket.inet_ntoa(rr.rdata), 'hostname': rr.name}
 		elif rr.type == 28: return {'type': 'aaaa', 'ipv6': socket.inet_ntop(socket.AF_INET6, rr.rdata), 'hostname': rr.name}
-		elif rr.type == 5:	return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
+		elif rr.type == 5: return {'type': 'cname', 'hostname': rr.name, 'cname': rr.cname}
 		elif rr.type == 13: return {'type': 'hostinfo', 'hostname': rr.name, 'info': rr.rdata}
 		elif rr.type == 33: return {'type': 'srv', 'hostname': rr.srvname, 'port': rr.port, 'srv': rr.name.split('.')[-3], 'proto': rr.name.split('.')[-2]}
 		elif rr.type == 12: return {'type': 'ptr'}
@@ -114,6 +119,7 @@ class mDNS(object):
 
 	def get(self):
 		return self.msg
+
 
 class PacketDecoder(object):
 	"""
@@ -136,13 +142,14 @@ class PacketDecoder(object):
 	   -- icmpv6:
 	"""
 	ipMap = {}
-	def getip(self,ip,ipv6=False):
+
+	def getip(self, ip, ipv6=False):
 		if ipv6:
 			return socket.inet_ntop(socket.AF_INET6, ip)
 		else:
 			return socket.inet_ntoa(ip)
 
-	def decode(self,eth):
+	def decode(self, eth):
 		"""
 		decode an ethernet packet. The dict returned indicates the type (arp,mdns,etc)
 		which will indicate how to read/use the dict.
@@ -174,17 +181,18 @@ class PacketDecoder(object):
 
 			# TCP not useful
 			elif ip.p == dpkt.ip.IP_PROTO_TCP:
-				tcp = ip.data
+				pass
+				# tcp = ip.data
 				# print 'IPv6 TCP','port:',tcp.dport,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
 
 			# ICMP error msg not useful for mapping
 			elif ip.p == dpkt.ip.IP_PROTO_ICMP6:
 				# print 'IPv6 icmp6:',ip.data.data
-				0
+				pass
 
 			# other stuff I haven't decoded
 			else:
-				0
+				pass
 				# print 'IPv6',ip.p,'src:',self.getip(ip.src,True),'dst:',self.getip(ip.dst,True)
 		elif eth.type == dpkt.ethernet.ETH_TYPE_IP:
 			ip = eth.data
@@ -194,16 +202,18 @@ class PacketDecoder(object):
 				udp = ip.data
 
 				# these aren't useful
-				if udp.dport == 53: #DNS
+				if udp.dport == 53:  # DNS
 					# return DNS(udp.data)
 					return {}
 
-				elif udp.dport == 5353: # mDNS
+				elif udp.dport == 5353:  # mDNS
 					# print 'mDNS'
 					# print udp
 					return mDNS(udp).get()
+
 				elif self.getip(ip.dst) == '239.255.255.250':
 					return {}
+
 				else:
 					# don't print standard ports
 					# 17500 dropbox
@@ -242,30 +252,27 @@ class PacketDecoder(object):
 			# elif ip.p == dpkt.ip.IP_PROTO_ICMP6:
 			# 	print '?????? other icmp6','src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
 			elif ip.p == 2:
-				0
+				pass
 				# print 'IGMP','src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
 			else:
 				# print 'other ip packet','src:',self.getip(ip.src),'dst:',self.getip(ip.dst)
 				return {}
 
-####################################################
-
-####################################################
 
 class PassiveMapper(object):
 	def __init__(self):
 		self.map = []
 
-	def process(self,hrd,data):
+	def process(self, hrd, data):
 		"""
 		Processes each packet from pcap
 		"""
-		eth = dpkt.ethernet.Ethernet (data)
+		eth = dpkt.ethernet.Ethernet(data)
 
 		a = self.p.decode(eth)
 		if a: self.map.append(a)
 
-	def pcap(self,fname):
+	def pcap(self, fname):
 		"""
 		opens a pcap file and reads the contents
 		"""
@@ -273,12 +280,12 @@ class PassiveMapper(object):
 
 		self.map = []
 		self.p = PacketDecoder()
-		cap.loop(0,self.process)
+		cap.loop(0, self.process)
 
 		return self.map
 
-	def rr(self,rec):
-		ans = {'hostname':'','tcp':[], 'udp': []}
+	def rr(self, rec):
+		ans = {'hostname': '', 'tcp': [], 'udp': []}
 		for line in rec['rr']:
 			rtype = line['type']
 			if rtype == 'ptr': 0
@@ -302,8 +309,7 @@ class PassiveMapper(object):
 		if not ans['hostname'] and not ans['tcp']: ans = {}
 		return ans
 
-
-	def filter(self,rec):
+	def filter(self, rec):
 		"""
 		The output from pcap is just a list of records, this condenses/combines
 		the info into a network mapping.
@@ -329,10 +335,10 @@ class PassiveMapper(object):
 				elif rtype == 'arp': ans.append(line)
 				else: print '<<<<', line, '>>>>>>>'
 			else:
-				print '******',line,'*******'
+				print '******', line, '*******'
 		return ans
 
-	def find(self,a,list):
+	def find(self, a, list):
 		"""
 		find a record for the same host and merges the info. If the host can't
 		be found, then it adds a new record for the host.
@@ -353,16 +359,16 @@ class PassiveMapper(object):
 		list.append(a)
 		return
 
-	def combine(self,map):
+	def combine(self, map):
 		"""
 		lots to do
 		"""
 		ans = []
 		for host in map:
-			self.find(host,ans)
+			self.find(host, ans)
 		return ans
 
-	def live(self,dev,loop=500):
+	def live(self, dev, loop=500):
 		"""
 		open device
 		Arguments here are:
@@ -376,13 +382,13 @@ class PassiveMapper(object):
 				exit('You need to be root/sudo for real-time ... exiting')
 
 		# real-time
-		cap = pcapy.open_live(dev , 2048 ,False, 50)
-		#cap.setfilter('udp')
+		cap = pcapy.open_live(dev, 2048, False, 50)
+		# cap.setfilter('udp')
 
 		self.map = []
 		self.p = PacketDecoder()
 
-		#start sniffing packets
+		# start sniffing packets
 		while(loop):
 			try:
 				loop -= 1
@@ -393,38 +399,6 @@ class PassiveMapper(object):
 			except:
 				continue
 
-			self.process(header,data)
+			self.process(header, data)
 
 		return self.map
-
-########################################################
-
-
-def handleArgs():
-	description = """The passive mapper primarily listens and records mDNS
-	traffic.
-	Example:
-		pscan --file network.pcap --save network.json
-
-	"""
-	parser = argparse.ArgumentParser(description)
-	args = parser.parse_args()
-	return args
-
-def main():
-	args = handleArgs()
-
-	map = []
-	pm = PassiveMapper()
-	map = pm.pcap('test.pcap')
-	map = pm.filter(map)
-	map = pm.combine(map)
-	map = pm.combine(map)
-	pp.pprint( map )
-
-	return map
-
-
-
-if __name__ == "__main__":
-	main()

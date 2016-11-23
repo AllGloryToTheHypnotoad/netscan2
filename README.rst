@@ -51,11 +51,11 @@ or
 
 Download and unzip, then from inside the package::
 
-	sudo python setup.py install
+	python setup.py install
 
 If you are working on it::
 
-	sudo python setup.py develop
+	pip install -e .
 
 Run
 ------------
