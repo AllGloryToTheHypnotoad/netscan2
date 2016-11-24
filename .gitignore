@@ -8,4 +8,6 @@ other
 netscan.egg-info
 dist
 .AppleDouble
-
+data
+*.pcap
+.ipynb_checkpoints

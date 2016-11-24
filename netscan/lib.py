@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import pcapy
 # import os
 import sys
 import subprocess  # use commandline
-# from requests import get  # whois
-import requests
+import requests    # whois
 import re
+from netaddr import valid_ipv4, valid_mac
+import os
+# import platform  # socket alternative to get hostname
+import socket
 
 """
 [kevin@Tardis test]$ ./pmap5.py -p test2.pcap -d
@@ -28,6 +32,10 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 """
 
 
+def checkSudo():
+	return os.geteuid() != 0
+
+
 class Commands(object):
 	"""
 	Unfortunately the extremely simple/useful commands was depreciated in favor
@@ -40,12 +48,18 @@ class Commands(object):
 
 class WhoIs(object):
 	"""
+	Updated
 	"""
+	record = {}
+
 	def __init__(self, ip):
+		if not valid_ipv4(ip):
+			print('Error: the IPv4 address {} is invalid'.format(ip))
+			return
 		rec = requests.get('http://whois.arin.net/rest/ip/{}.txt'.format(ip))
 		if rec.status_code != 200:
-			print 'Error'
-			return {}
+			print('Error')
+			return
 		ans = {}
 		r = re.compile(r"\s\s+")
 		b = rec.text.split('\n')
@@ -55,7 +69,13 @@ class WhoIs(object):
 				a = l.split(':')
 				# print a
 				ans[a[0]] = a[1]
-		self.record = ans
+		self.record = ans  # remove?
+		self.CIDR = ans['CIDR']
+		self.NetName = ans['NetName']
+		self.NetRange = ans['NetRange']
+		self.Organization = ans['Organization']
+		self.Updated = ans['Updated']
+		# return None
 
 
 class GetHostName(object):
@@ -66,12 +86,25 @@ class GetHostName(object):
 		in: ip
 		out: string w/ host name or 'unknown' if the host name couldn't be found
 		"""
+		# handle invalid ip address
+		if not valid_ipv4(ip):
+			print('Error: the IPv4 address {} is invalid'.format(ip))
+			return
+
+		# handle a localhost ip address
+		if ip == '127.0.0.1':
+			# self.name = platform.node()
+			self.name = socket.gethostname()
+			return
+
+		# ok, now do more complex stuff
 		name = 'unknown'
 		if sys.platform == 'linux' or sys.platform == 'linux2':
 			name = self.cmdLine("avahi-resolve-address {} | awk '{print $2}'".format(ip)).rstrip().rstrip('.')
 		elif sys.platform == 'darwin':
 			name = self.cmdLine('dig +short -x {} -p 5353 @224.0.0.251'.format(ip)).rstrip().rstrip('.')
 
+		# detect any remaining errors
 		if name.find('connection timed out') >= 0: name = 'unknown'
 		if name == '': name = 'unknown'
 
@@ -137,18 +170,23 @@ class MacLookup(object):
 		u'startHex': u'B817C2000000',
 		u'type': u'MA-L'}
 		"""
+		unknown = {'company': 'unknown'}
+		if not valid_mac(mac):
+			print('Error: the mac addr {} is not valid'.format(mac))
+			return
+
 		try:
 			r = requests.get('http://www.macvendorlookup.com/api/v2/' + mac)
 		except requests.exceptions.HTTPError as e:
-			print "HTTPError:", e.message
-			return {'company': 'unknown'}
+			print ("HTTPError:", e.message)
+			return unknown
 
 		if r.status_code == 204:  # no content found, bad MAC addr
-			print 'ERROR: Bad MAC addr:', mac
-			return {'company': 'unknown'}
+			print ('ERROR: Bad MAC addr:', mac)
+			return unknown
 		elif r.headers['content-type'] != 'application/json':
-			print 'ERROR: Wrong content type:', r.headers['content-type']
-			return {'company': 'unknown'}
+			print ('ERROR: Wrong content type:', r.headers['content-type'])
+			return unknown
 
 		a = {}
 
@@ -157,7 +195,7 @@ class MacLookup(object):
 			else: a['company'] = r.json()[0]['company']
 			# print 'GOOD:',r.status_code,r.headers,r.ok,r.text,r.reason
 		except:
-			print 'ERROR:', r.status_code, r.headers, r.ok, r.text, r.reason
-			a = {'company': 'unknown'}
+			print ('ERROR:', r.status_code, r.headers, r.ok, r.text, r.reason)
+			a = unknown
 
 		return a

@@ -22,7 +22,8 @@ def main():
 
 	nmap = []
 	pm = PassiveMapper()
-	nmap = pm.pcap('test.pcap')
+	nmap = pm.pcap('../tests/test.pcap')
+	# nmap = pm.live('en1')
 	nmap = pm.filter(nmap)
 	nmap = pm.combine(nmap)
 	nmap = pm.combine(nmap)
