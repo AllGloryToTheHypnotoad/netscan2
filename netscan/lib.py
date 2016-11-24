@@ -39,6 +39,8 @@ class Commands(object):
 
 
 class WhoIs(object):
+	"""
+	"""
 	def __init__(self, ip):
 		rec = requests.get('http://whois.arin.net/rest/ip/{}.txt'.format(ip))
 		if rec.status_code != 200:
@@ -83,7 +85,7 @@ class CapturePackets(object):
 	"""
 	todo
 	"""
-	def __init__(self, iface, filename='test.pcap', filter=None, num_packets=3000):
+	def __init__(self, iface, filename='test.pcap', pcFilter=None, num_packets=3000):
 		# list all the network devices
 		# print pcapy.findalldevs()
 
@@ -91,7 +93,7 @@ class CapturePackets(object):
 		promiscuous = False
 		read_timeout = 100  # in milliseconds
 		pc = pcapy.open_live(iface, max_bytes, promiscuous, read_timeout)
-		if filter: pc.setfilter(filter)
+		if pcFilter: pc.setfilter(pcFilter)
 		self.dumper = pc.dump_open(filename)
 		pc.loop(num_packets, self.recv_pkts)  # capture packets
 

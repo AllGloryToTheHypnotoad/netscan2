@@ -18,17 +18,17 @@ def handleArgs():
 
 
 def main():
-	args = handleArgs()
+	# args = handleArgs()
 
-	map = []
+	nmap = []
 	pm = PassiveMapper()
-	map = pm.pcap('test.pcap')
-	map = pm.filter(map)
-	map = pm.combine(map)
-	map = pm.combine(map)
-	pp.pprint(map)
+	nmap = pm.pcap('test.pcap')
+	nmap = pm.filter(nmap)
+	nmap = pm.combine(nmap)
+	nmap = pm.combine(nmap)
+	pp.pprint(nmap)
 
-	return map
+	return nmap
 
 
 if __name__ == "__main__":

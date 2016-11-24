@@ -268,9 +268,9 @@ class PassiveMapper(object):
 		Processes each packet from pcap
 		"""
 		eth = dpkt.ethernet.Ethernet(data)
-
 		a = self.p.decode(eth)
-		if a: self.map.append(a)
+		if a:
+			self.map.append(a)
 
 	def pcap(self, fname):
 		"""
@@ -288,13 +288,16 @@ class PassiveMapper(object):
 		ans = {'hostname': '', 'tcp': [], 'udp': []}
 		for line in rec['rr']:
 			rtype = line['type']
-			if rtype == 'ptr': 0
-			elif rtype == 'txt': 0
+			if rtype == 'ptr':
+				pass
+			elif rtype == 'txt':
+				pass
 			elif rtype == 'srv':
 				ans['hostname'] = line['hostname']
 				if line['proto'] == '_tcp': ans['tcp'].append({'srv': line['srv'], 'port': line['port']})
 				elif line['proto'] == '_udp': ans['udp'].append({'srv': line['srv'], 'port': line['port']})
-				else: print 'something happened', line
+				else:
+					print 'something happened', line
 			# elif type == 'rr': print 'rr'
 			elif rtype == 'aaaa':
 				ans['ipv6'] = line['ipv6']
@@ -304,9 +307,11 @@ class PassiveMapper(object):
 				ans['ipv4'] = line['ipv4']
 				ans['hostname'] = line['hostname']
 				# ans['mac'] = line['mac']
-			else: print 'shit', line
+			else:
+				print 'shit', line
 
-		if not ans['hostname'] and not ans['tcp']: ans = {}
+		if not ans['hostname'] and not ans['tcp']:
+			ans = {}
 		return ans
 
 	def filter(self, rec):
@@ -338,12 +343,12 @@ class PassiveMapper(object):
 				print '******', line, '*******'
 		return ans
 
-	def find(self, a, list):
+	def find(self, a, b):
 		"""
 		find a record for the same host and merges the info. If the host can't
 		be found, then it adds a new record for the host.
 		"""
-		for i in list:
+		for i in b:
 			if 'ipv4' in i and 'ipv4' in a:
 				if i['ipv4'] == a['ipv4']:
 					i.update(a)
@@ -356,15 +361,15 @@ class PassiveMapper(object):
 				if i['hostname'] == a['hostname']:
 					i.update(a)
 					return
-		list.append(a)
+		b.append(a)
 		return
 
-	def combine(self, map):
+	def combine(self, nmap):
 		"""
 		lots to do
 		"""
 		ans = []
-		for host in map:
+		for host in nmap:
 			self.find(host, ans)
 		return ans
 
