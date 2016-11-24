@@ -6,7 +6,7 @@ python:
   - "2.7"
 
 # command to install dependencies
-install: python setup.py install
+install: pip install requests pcapy dpkt netaddr
 
 # command to run tests
 # script: nosetests -v netscan/tests.py
