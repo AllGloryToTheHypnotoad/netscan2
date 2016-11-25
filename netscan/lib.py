@@ -33,7 +33,12 @@ tcpdump: listening on pktap, link-type PKTAP (Packet Tap), capture size 65535 by
 
 
 def checkSudo():
-	return os.geteuid() != 0
+	return os.geteuid() == 0
+
+
+# def command(cmd):
+# 	ans = subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+# 	return ans
 
 
 class Commands(object):
@@ -41,7 +46,7 @@ class Commands(object):
 	Unfortunately the extremely simple/useful commands was depreciated in favor
 	of the complex/confusing subprocess ... this aims to simplify.
 	"""
-	def getoutput(self, cmd):
+	def command(self, cmd):
 		ans = subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 		return ans
 
@@ -78,7 +83,7 @@ class WhoIs(object):
 		# return None
 
 
-class GetHostName(object):
+class GetHostName(Commands):
 	def __init__(self, ip):
 		"""Use the avahi (zeroconfig) tools or dig to find a host name given an
 		ip address.
@@ -100,9 +105,9 @@ class GetHostName(object):
 		# ok, now do more complex stuff
 		name = 'unknown'
 		if sys.platform == 'linux' or sys.platform == 'linux2':
-			name = self.cmdLine("avahi-resolve-address {} | awk '{print $2}'".format(ip)).rstrip().rstrip('.')
+			name = self.command("avahi-resolve-address {} | awk '{print $2}'".format(ip)).rstrip().rstrip('.')
 		elif sys.platform == 'darwin':
-			name = self.cmdLine('dig +short -x {} -p 5353 @224.0.0.251'.format(ip)).rstrip().rstrip('.')
+			name = self.command('dig +short -x {} -p 5353 @224.0.0.251'.format(ip)).rstrip().rstrip('.')
 
 		# detect any remaining errors
 		if name.find('connection timed out') >= 0: name = 'unknown'
@@ -110,8 +115,8 @@ class GetHostName(object):
 
 		self.name = name
 
-	def cmdLine(self, cmd):
-		return subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+	# def cmdLine(self, cmd):
+	# 	return subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 
 
 class CapturePackets(object):

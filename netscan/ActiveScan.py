@@ -22,12 +22,12 @@ class ArpScan(Commands):
 		brew install arp-scan
 
 		arp-scan -l -I en1
-		 -l use local networking info
-		 -I use a specific interface
+			-l use local networking info
+			-I use a specific interface
 
-		 return {mac: mac_addr, ipv4: ip_addr}
+		return {mac: mac_addr, ipv4: ip_addr}
 
-		 Need to invest the time to do this myself w/o using commandline
+		Need to invest the time to do this myself w/o using commandline
 		"""
 		arp = self.getoutput("arp-scan -l -I {}".format(dev))
 		a = arp.split('\n')
@@ -209,7 +209,12 @@ class ActiveMapper(object):
 
 		in: device for arp-scan to use (ie. en1)
 		out: [host1,host2,...]
-		      where host is: {'mac': '34:62:98:03:b6:b8', 'hostname': 'Airport-New.local', 'ipv4': '192.168.18.76' 'tcp':[(port,svc),...)]}
+			where host is: {
+				'mac': '34:62:98:03:b6:b8',
+				'hostname': 'Airport-New.local',
+				'ipv4': '192.168.18.76',
+				'tcp':[(port,svc),...)]
+			}
 		"""
 		arpscanner = ArpScan()
 		arp = arpscanner.scan(dev)

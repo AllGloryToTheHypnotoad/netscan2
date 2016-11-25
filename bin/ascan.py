@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-import os
+# import os
 import sys
 import simplejson as json
 import argparse
 import pprint as pp  # display info
 from netscan.ActiveScan import ActiveMapper
+from netscan.lib import checkSudo
 
 
 def handleArgs():
@@ -41,7 +42,7 @@ def main():
 	args = handleArgs()
 
 	# check for sudo/root privileges
-	if os.geteuid() != 0:
+	if not checkSudo():
 		exit('You need to be root/sudo ... exiting')
 
 	try:

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from netscan.PassiveScan import PassiveMapper
+# from netscan.PassiveScan import PassiveMapper
 from netscan.lib import MacLookup
 from netscan.lib import WhoIs
 from netscan.lib import GetHostName
