@@ -5,14 +5,11 @@ Network Scanner
 	:align: center
 
 
-.. image:: https://travis-ci.org/walchko/netscan2.svg?branch=master
+.. image:: https://travis-ci.org/AllGloryToTheHypnotoad/netscan2.svg?branch=master
 	:target: https://travis-ci.org/walchko/netscan2
 .. image:: https://img.shields.io/pypi/v/netscan.svg
 	:target: https://pypi.python.org/pypi/netscan/
 	:alt: Latest Version
-.. image:: https://img.shields.io/pypi/dm/netscan.svg
-	:target: https://pypi.python.org/pypi/netscan/
-	:alt: Downloads
 .. image:: https://img.shields.io/pypi/l/netscan.svg
 	:target: https://pypi.python.org/pypi/netscan/
 	:alt: License
