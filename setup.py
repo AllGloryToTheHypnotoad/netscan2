@@ -71,7 +71,7 @@ setup(
 		'bin/pscan.py',
 		'bin/gethostname.py',
 		'bin/getvendor.py',
-		'bin/ipwhois'
+		'bin/ipwhois.py'
 	]
 	# entry_points={
 	# 	'console_scripts': [
