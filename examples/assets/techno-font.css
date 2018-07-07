@@ -1,0 +1,165 @@
+/*
+  Icon Font: techno-font
+*/
+
+@font-face {
+  font-family: "techno-font";
+  src: url("./techno-font.eot");
+  src: url("./techno-font.eot?#iefix") format("embedded-opentype"),
+       url("./techno-font.woff") format("woff"),
+       url("./techno-font.ttf") format("truetype"),
+       url("./techno-font.svg#techno-font") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  @font-face {
+    font-family: "techno-font";
+    src: url("./techno-font.svg#techno-font") format("svg");
+  }
+}
+
+.fl {
+}
+
+
+
+.tf-12 { font-size: 12px; }
+
+.tf-14 { font-size: 14px; }
+
+.tf-16 { font-size: 16px; }
+
+.tf-18 { font-size: 18px; }
+
+.tf-21 { font-size: 21px; }
+
+.tf-24 { font-size: 24px; }
+
+.tf-36 { font-size: 36px; }
+
+.tf-48 { font-size: 48px; }
+
+.tf-60 { font-size: 60px; }
+
+.tf-72 { font-size: 72px; }
+
+.tf-96 { font-size: 96px; }
+
+.tf-128 { font-size: 128px; }
+
+.tf-256 { font-size: 256px; }
+
+
+[data-icon]:before { content: attr(data-icon); }
+
+[data-icon]:before,
+.tf-apple:before,
+.tf-archlinux:before,
+.tf-bitbucket:before,
+.tf-bluetooth:before,
+.tf-cassandra:before,
+.tf-centos:before,
+.tf-css3:before,
+.tf-debian:before,
+.tf-desktop:before,
+.tf-docker:before,
+.tf-dropbox:before,
+.tf-empire:before,
+.tf-fedora:before,
+.tf-firstorder:before,
+.tf-freebsd:before,
+.tf-gentoo:before,
+.tf-git:before,
+.tf-github:before,
+.tf-github-alt:before,
+.tf-hdd:before,
+.tf-html5:before,
+.tf-jsfiddle:before,
+.tf-linuxmint:before,
+.tf-microchip:before,
+.tf-mobile:before,
+.tf-mongodb:before,
+.tf-nodejs:before,
+.tf-npm:before,
+.tf-opensuse:before,
+.tf-python:before,
+.tf-qrcode:before,
+.tf-qrcode-alt:before,
+.tf-raspberrypi:before,
+.tf-rebel:before,
+.tf-redhat:before,
+.tf-rocket:before,
+.tf-slackware:before,
+.tf-stackexchange:before,
+.tf-stackoverflow:before,
+.tf-tablet:before,
+.tf-tux:before,
+.tf-twitter:before,
+.tf-ubuntu:before,
+.tf-ubuntu-inverse:before,
+.tf-vimeo:before,
+.tf-wireless:before,
+.tf-youtube:before {
+  display: inline-block;
+  font-family: "techno-font";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  line-height: 1;
+  text-decoration: inherit;
+  text-rendering: optimizeLegibility;
+  text-transform: none;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-smoothing: antialiased;
+}
+
+.tf-apple:before { content: "\f116"; }
+.tf-archlinux:before { content: "\f100"; }
+.tf-bitbucket:before { content: "\f129"; }
+.tf-bluetooth:before { content: "\f12a"; }
+.tf-cassandra:before { content: "\f117"; }
+.tf-centos:before { content: "\f101"; }
+.tf-css3:before { content: "\f136"; }
+.tf-debian:before { content: "\f102"; }
+.tf-desktop:before { content: "\f12b"; }
+.tf-docker:before { content: "\f118"; }
+.tf-dropbox:before { content: "\f12c"; }
+.tf-empire:before { content: "\f12d"; }
+.tf-fedora:before { content: "\f103"; }
+.tf-firstorder:before { content: "\f13e"; }
+.tf-freebsd:before { content: "\f10f"; }
+.tf-gentoo:before { content: "\f111"; }
+.tf-git:before { content: "\f119"; }
+.tf-github:before { content: "\f11a"; }
+.tf-github-alt:before { content: "\f138"; }
+.tf-hdd:before { content: "\f135"; }
+.tf-html5:before { content: "\f139"; }
+.tf-jsfiddle:before { content: "\f11c"; }
+.tf-linuxmint:before { content: "\f105"; }
+.tf-microchip:before { content: "\f13a"; }
+.tf-mobile:before { content: "\f12f"; }
+.tf-mongodb:before { content: "\f11d"; }
+.tf-nodejs:before { content: "\f125"; }
+.tf-npm:before { content: "\f11f"; }
+.tf-opensuse:before { content: "\f109"; }
+.tf-python:before { content: "\f120"; }
+.tf-qrcode:before { content: "\f121"; }
+.tf-qrcode-alt:before { content: "\f13b"; }
+.tf-raspberrypi:before { content: "\f122"; }
+.tf-rebel:before { content: "\f130"; }
+.tf-redhat:before { content: "\f10a"; }
+.tf-rocket:before { content: "\f131"; }
+.tf-slackware:before { content: "\f10b"; }
+.tf-stackexchange:before { content: "\f134"; }
+.tf-stackoverflow:before { content: "\f126"; }
+.tf-tablet:before { content: "\f132"; }
+.tf-tux:before { content: "\f128"; }
+.tf-twitter:before { content: "\f133"; }
+.tf-ubuntu:before { content: "\f10d"; }
+.tf-ubuntu-inverse:before { content: "\f10e"; }
+.tf-vimeo:before { content: "\f13c"; }
+.tf-wireless:before { content: "\f123"; }
+.tf-youtube:before { content: "\f13d"; }
