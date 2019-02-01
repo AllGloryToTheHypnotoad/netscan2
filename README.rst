@@ -2,6 +2,7 @@ Network Scanner
 =================
 
 .. figure:: https://imgs.xkcd.com/comics/map_of_the_internet.jpg
+	:target: https://xkcd.com/195/
 	:align: center
 
 
