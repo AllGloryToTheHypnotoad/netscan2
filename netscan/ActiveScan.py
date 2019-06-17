@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 # import datetime      # time stamp
 # import os            # check sudo
 import netaddr       # ipv4/6 addresses, address space: 192.168.5.0/24, pinger
 # import pprint as pp  # display info
-import commands      # arp-scan
+import subprocess      # arp-scan
 import socket        # get hostname and pinger
 # import sys           # get platform (linux or linux2 or darwin)
 # import argparse      # handle command line
 # import json          # save data
 import random        # Pinger uses it when creating ICMP packets
 import dpkt
-from lib import Commands, GetHostName, MacLookup
+from .lib import Commands, GetHostName, MacLookup
 
 ####################################################
 
@@ -31,7 +32,7 @@ class ArpScan(Commands):
 		"""
 		arp = self.getoutput("arp-scan -l -I {}".format(dev))
 		a = arp.split('\n')
-		print a
+		print(a)
 		ln = len(a)
 
 		d = []
@@ -76,7 +77,7 @@ class IP(object):
 		"""
 		# this doesn't work, could return any network address (en0, en1, bluetooth, etc)
 		# return ':'.join(re.findall('..', '%012x' % uuid.getnode()))
-		mac = commands.getoutput("ifconfig " + dev + "| grep ether | awk '{ print $2 }'")
+		mac = subprocess.getoutput("ifconfig " + dev + "| grep ether | awk '{ print $2 }'")
 
 		# double check it is a valid mac address
 		if len(mac) == 17 and len(mac.split(':')) == 6: return mac
@@ -119,7 +120,7 @@ class Pinger(object):
 			msg = self.createICMP('test')
 			self.udp.sendto(msg, (ip, 10))
 		except socket.error as e:
-			print e, 'ip:', ip
+			print(e, 'ip:', ip)
 
 		try:
 			self.sniffer.settimeout(0.01)
@@ -162,7 +163,7 @@ class PortScanner(object):
 	"""
 	Scans a single host and finds all open ports with in its range (1 ... n).
 	"""
-	def __init__(self, ports=range(1, 1024)):
+	def __init__(self, ports=list(range(1, 1024))):
 		self.ports = ports
 
 	def openPort(self, ip, port):
@@ -200,7 +201,7 @@ class ActiveMapper(object):
 	"""
 	Actively scans a network (arp-scan) and then pings each host for open ports.
 	"""
-	def __init__(self, ports=range(1, 1024)):
+	def __init__(self, ports=list(range(1, 1024))):
 		self.ports = ports
 
 	def scan(self, dev):
@@ -218,7 +219,7 @@ class ActiveMapper(object):
 		"""
 		arpscanner = ArpScan()
 		arp = arpscanner.scan(dev)
-		print 'Found '+str(len(arp))+' hosts'
+		print('Found '+str(len(arp))+' hosts')
 
 		# ports = []
 		portscanner = PortScanner(self.ports)
@@ -236,6 +237,6 @@ class ActiveMapper(object):
 
 			counter += 1
 			# print 'host['+str(counter)+']: ' # need something better
-			print 'host[{}]: {} {} with {} open ports'.format(counter, host['hostname'], host['ipv4'], len(host['tcp']))
+			print('host[{}]: {} {} with {} open ports'.format(counter, host['hostname'], host['ipv4'], len(host['tcp'])))
 
 		return arp

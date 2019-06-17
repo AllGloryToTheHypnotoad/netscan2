@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 # import datetime      # time stamp
 import pcapy         # passive mapping
 import os            # check sudo
@@ -297,7 +298,7 @@ class PassiveMapper(object):
 				if line['proto'] == '_tcp': ans['tcp'].append({'srv': line['srv'], 'port': line['port']})
 				elif line['proto'] == '_udp': ans['udp'].append({'srv': line['srv'], 'port': line['port']})
 				else:
-					print 'something happened', line
+					print('something happened', line)
 			# elif type == 'rr': print 'rr'
 			elif rtype == 'aaaa':
 				ans['ipv6'] = line['ipv6']
@@ -308,7 +309,7 @@ class PassiveMapper(object):
 				ans['hostname'] = line['hostname']
 				# ans['mac'] = line['mac']
 			else:
-				print 'shit', line
+				print('shit', line)
 
 		if not ans['hostname'] and not ans['tcp']:
 			ans = {}
@@ -338,9 +339,9 @@ class PassiveMapper(object):
 				if rtype == 'aaaa': ans.append(line)
 				elif rtype == 'a': ans.append(line)
 				elif rtype == 'arp': ans.append(line)
-				else: print '<<<<', line, '>>>>>>>'
+				else: print('<<<<', line, '>>>>>>>')
 			else:
-				print '******', line, '*******'
+				print('******', line, '*******')
 		return ans
 
 	def find(self, a, b):
@@ -397,9 +398,9 @@ class PassiveMapper(object):
 		while(loop):
 			try:
 				loop -= 1
-				(header, data) = cap.next()
+				(header, data) = next(cap)
 			except KeyboardInterrupt:
-				print 'You hit ^C, exiting PassiveMapper ... bye'
+				print('You hit ^C, exiting PassiveMapper ... bye')
 				exit()
 			except:
 				continue
